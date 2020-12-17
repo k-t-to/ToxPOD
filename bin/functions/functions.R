@@ -33,8 +33,11 @@ parse_data <- function(data_file_path, dr_threshold = 0.8) {
   dat <- read.table(data_file_path, header = T)
   # Check data format
   data_checks(dat, dr_threshold = dr_threshold)
-  # Format data as list
+  # Convert doses to log10 scale
   colnames(dat) <- c("dose", "response")
+  dat$log10_dose <- log10(dat$dose + 1)
+  dat <- dat[,c("dose", "log10_dose", "response")]
+  # Format data as list
   dat <- split(dat, dat[,1])
   dat
 }
@@ -68,7 +71,7 @@ calculate_pod_from_menger_curvature <- function(predicted_dose_response) {
   # Declare list to store calculations
   n_3 <- length(predicted_dose_response$x) - 2
   MC_values <- list(
-    dose = vector("double", n_3),
+    log10_dose = vector("double", n_3),
     mc = vector("double", n_3)
   )
   # Loop through data and calculate MC
@@ -80,7 +83,7 @@ calculate_pod_from_menger_curvature <- function(predicted_dose_response) {
       interpolated_dose_vector = dose_temp,
       predicted_response_vector = response_temp
     )
-    MC_values[["dose"]][i] <- dose_temp[2]
+    MC_values[["log10_dose"]][i] <- dose_temp[2]
     MC_values[["mc"]][i] <- MC_temp
   }
   # Return the dose corresponding to the highest curvature.
@@ -98,8 +101,8 @@ perform_bootstrap <- function(dat, interpolated_doses) {
                                function(x) x[sample(nrow(x),1),])
   bootstrap_responses <- do.call("rbind", bootstrap_responses)
   # Create spline model
-  bs_spline_model <- splines::interpSpline(bootstrap_responses[,1], 
-                                           bootstrap_responses[,2])
+  bs_spline_model <- splines::interpSpline(bootstrap_responses[,2], 
+                                           bootstrap_responses[,3])
   # Predict responses for interpolated doses
   pred_vals <- predict(bs_spline_model, interpolated_doses)
   # Get POD
@@ -108,7 +111,7 @@ perform_bootstrap <- function(dat, interpolated_doses) {
   # Output
   list(
     bootstrap_values = bootstrap_responses,
-    spline_predictions = data.frame(dose = pred_vals$x, response_pred = pred_vals$y),
+    spline_predictions = data.frame(log10_dose = pred_vals$x, response_pred = pred_vals$y),
     mc_values = mc_pod$MC_values,
     POD = mc_pod$POD
   )
@@ -119,8 +122,8 @@ calculate_pod_quantiles <- function(dat,
                                     resample_size = 1000,
                                     interpolation_size = 50,
                                     quantile_probs = c(0.05, 0.5, 0.95)) {
-  # dat <- parse_data(data_file_path, dr_threshold = dr_threshold)
-  interpolated_doses <- calculate_interpolated_doses(dose_vector = names(dat), 
+  dose_vector <- sapply(dat, function(x) x$log10_dose[1])
+  interpolated_doses <- calculate_interpolated_doses(dose_vector = dose_vector, 
                                                      length.out = interpolation_size)
   pods <- lapply(1:resample_size, function(x) perform_bootstrap(dat, interpolated_doses))
   # Reformat pods
@@ -142,6 +145,9 @@ calculate_pod_quantiles <- function(dat,
   })
   spline_values <- do.call("rbind", spline_values)
   rownames(spline_values) <- NULL
+  # Add back original dose
+  spline_values$dose <- (10^spline_values$log10_dose) - 1
+  spline_values <- spline_values[,c("bs_index", "dose", "log10_dose", "response_pred")]
   
   # Extract Menger Curvature calculations
   mc_values <- lapply(names(pods), function(bs_index){
@@ -151,6 +157,9 @@ calculate_pod_quantiles <- function(dat,
   })
   mc_values <- do.call("rbind", mc_values)
   rownames(mc_values) <- NULL
+  # Add back original dose
+  mc_values$dose <- (10^mc_values$log10_dose) - 1
+  mc_values <- mc_values[,c("bs_index", "dose", "log10_dose", "mc")]
   
   pod_values <- lapply(names(pods), function(bs_index) {
     temp <- pods[[bs_index]]$POD
@@ -159,8 +168,12 @@ calculate_pod_quantiles <- function(dat,
   })
   pod_values <- do.call("rbind", pod_values)
   rownames(pod_values) <- NULL
+  # Add back original dose
+  pod_values$dose <- (10^pod_values$log10_dose) - 1
+  pod_values <- pod_values[,c("bs_index", "dose", "log10_dose", "mc")]
   
-  pod_quantiles <- quantile(pod_values$dose, probs = quantile_probs)
+  pod_quantiles <- list(dose = quantile(pod_values$dose, probs = quantile_probs),
+                        log10_dose = quantile(pod_values$log10_dose, probs = quantile_probs))
   
   # List output
   list(

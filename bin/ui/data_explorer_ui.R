@@ -3,30 +3,40 @@
 ################################
 
 ### Sidebar ----- 
+# View options
+bs_view_opts <- wellPanel(
+  conditionalPanel(condition = "input.Run",
+                   radioButtons(inputId = "viewopt_bs",
+                                label = "View Options",
+                                choices = c("Original Doses", "Log10(Doses)"),
+                                selected = "Log10(Doses)")
+  ))
+
 # Summary selections
-bs_run_panel <- conditionalPanel(
+bs_sample_panel <- conditionalPanel(
   condition = "input.Run",
   wellPanel(
-    actionButton(inputId = "bs_summary",
-                 label = "Draw Summary Plot"),
-    hr(),
     selectInput(inputId = "bs_id",
                 label = "Bootstrap Samples",
                 choices = c(),
                 multiple = TRUE),
     actionButton(inputId = "plot_bs",
-                 label = "Draw Plots")
+                 label = "Draw Bootstrap Samples")
   )
 )
 
+
 ### Main panel -----
-bs_panel <- tabPanel(
+bs_summary_main <- tabPanel(
   "Bootstrap Summary",
   fluidRow(
     column(12,
-           plotOutput("bs_summary_plot")),
-    hr(),
-    fluidRow(column(12,
-                    plotOutput("bs_plots")))
+           plotOutput("bs_summary_plot"))
   )
+)
+
+bs_sample_main <- tabPanel(
+  "Bootstrap Samples",
+  fluidRow(column(12,
+           plotOutput("bs_plots")))
 )
