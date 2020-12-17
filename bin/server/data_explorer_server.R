@@ -23,12 +23,3 @@ bs_plots <- eventReactive(input$plot_bs,
 observeEvent(input$plot_bs, {
   output$bs_plots <- withProgress(renderPlot(bs_plots()), message = "Drawing Sample Plots...")
 })
-
-# Switch to Bootstrap summary tab after action button click
-observeEvent(input$bs_summary, {
-  updateTabsetPanel(session, "POD_Panel", selected = "Bootstrap Summary")
-})
-
-observeEvent(input$plot_bs, {
-  updateTabsetPanel(session, "POD_Panel", selected = "Bootstrap Summary")
-})
