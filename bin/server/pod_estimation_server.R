@@ -1,6 +1,9 @@
-### Input Data -----
+################################
+# Server for POD Estimation 
+################################
 
-# Data choice
+### Input Data -----
+# Load and parse file based on user input
 user_dat <- eventReactive(input$input_file, parse_data(input$input_file$datapath))
 ex_dat <- eventReactive(input$data_choice %in% c("Example 1", "Example 2", "Example 3"), {
   if (input$data_choice == "Example 1") {return(parse_data("../data/input_example_1.txt"))}
@@ -16,14 +19,14 @@ dr_dat <- reactive({
   }
 })
 
-# Display input data
+# Plot input data
 input_data_plot <- eventReactive(dr_dat(),
                                  plot_input_data(dr_dat()))
 
 observeEvent(input_data_plot(),
              output$input_data_plot <- renderPlot(input_data_plot()))
 
-# Display input table
+# Display input data
 input_data_table <- eventReactive(dr_dat(), {
   datatable(do.call("rbind", dr_dat()),
             colnames = c("dose", "response"),
@@ -34,23 +37,23 @@ input_data_table <- eventReactive(dr_dat(), {
 observeEvent(input_data_table(),
              output$input_data_table <- renderDataTable({input_data_table()}))
 
+# Switch back to input data tab when data choice is updated
 observeEvent(input$data_choice, {
   updateTabsetPanel(session, "POD_Panel", selected = "Input Data")
 })
 
 ### Analysis ---- 
-# User clicks action button
-# Results calculated
+# User clicks Run Analysis
 res <- eventReactive(input$Run, {
   withProgress(calculate_pod_quantiles(dr_dat(), resample_size = input$resample_size), message = "Calculating...")
 })
 
-# Switch tab
+# Switch tab to Results upon action button click
 observeEvent(input$Run, {
   updateTabsetPanel(session, "POD_Panel", selected = "Results")
 })
 
-# Create result table upon action button click
+# Display result table upon action button click
 pod_res_table <- eventReactive(input$Run, {
   datatable(res()$pods,
             colnames = c("Bootstrap Index", "POD", "Menger Curvature"),
@@ -58,7 +61,7 @@ pod_res_table <- eventReactive(input$Run, {
             options = list(dom = "tlp"))
 })
 
-# Render data table to display
+# Display results table
 output$table <- renderDataTable({
   formatRound(pod_res_table(), columns = c(2,3), digits = 2)
 })
@@ -68,10 +71,9 @@ pod_dist_plot <- eventReactive(input$Run, {
   plot_pod_dist(res()$pods, res()$pod_quantile)
 })
 
-# Render plot to display
 output$pod_dist <- renderPlot(pod_dist_plot())
 
-# To save output... update
+# Save results 
 output$downloadRes <- downloadHandler(
   filename = function() {
     paste0(format(Sys.time(), "%Y%m%d_%H%M_graveeoutput.zip"))
@@ -96,30 +98,3 @@ output$downloadRes <- downloadHandler(
   },
   contentType = "application/zip"
 )
-
-bs_summary_plot <- eventReactive(input$bs_summary,
-                                 plot_mc_summary(res()$spline_predictions, res()$pods))
-
-observeEvent(input$bs_summary, {
-  output$bs_summary_plot <- withProgress(renderPlot(bs_summary_plot()), message = "Drawing Summary Plot...")
-})
-
-observe({
-  choices <- res()$pods$bs_index
-  updateSelectInput(session, "bs_id", choices = choices)
-})
-
-bs_plots <- eventReactive(input$plot_bs,
-                          plot_mc(res()$spline_predictions, res()$menger_curvature, res()$pods, bs_id = as.numeric(input$bs_id)))
-
-observeEvent(input$plot_bs, {
-  output$bs_plots <- withProgress(renderPlot(bs_plots()), message = "Drawing Sample Plots...")
-})
-
-observeEvent(input$bs_summary, {
-  updateTabsetPanel(session, "POD_Panel", selected = "Bootstrap Summary")
-})
-
-observeEvent(input$plot_bs, {
-  updateTabsetPanel(session, "POD_Panel", selected = "Bootstrap Summary")
-})
