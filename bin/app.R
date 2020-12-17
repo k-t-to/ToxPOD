@@ -18,6 +18,7 @@ ui <- fluidPage(
   tabPanel("POD Estimation", icon = icon("play"),
            column(4,
                   pod_data_panel,
+                  pod_graph_panel,
                   pod_analyze_panel,
                   pod_dl_panel),
            column(8,
@@ -26,9 +27,12 @@ ui <- fluidPage(
                               result_panel))),
   tabPanel("Sample Explorer", icon = icon("chart-line"),
            column(4,
-                  bs_run_panel),
+                  bs_view_opts,
+                  bs_sample_panel),
            column(8,
-                  bs_panel)),
+                  tabsetPanel(id = "explorer_panel",
+                              bs_summary_main,
+                              bs_sample_main))),
   tabPanel("About", icon = icon("info-circle"),
            fluidRow(
              about_header,
@@ -36,7 +40,8 @@ ui <- fluidPage(
              in_example_section,
              analysis_section,
              sample_ex_section,
-             license_section
+             license_section,
+             contact_section
            ))
 ))
 

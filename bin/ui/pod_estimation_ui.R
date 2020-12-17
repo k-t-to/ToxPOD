@@ -15,6 +15,14 @@ pod_data_panel <- wellPanel(
                              multiple = FALSE))
 )
 
+# Graph options
+pod_graph_panel <- wellPanel(
+  radioButtons(inputId = "viewopt",
+               label = "View Options",
+               choices = c("Original Doses", "Log10(Doses)"),
+               selected = "Log10(Doses)"
+))
+
 # POD Estimation Analysis
 pod_analyze_panel <- wellPanel(
   conditionalPanel(condition="output.input_data_table",
