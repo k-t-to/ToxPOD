@@ -9,7 +9,7 @@ From R, use the following to launch the app:
 
 ```R
 if (!require("shiny")) install.packages("shiny"); library("shiny")
-runGitHub("GRAVEE_App", "k-t-to")
+runGitHub("GRAVEE_App", "k-t-to", subdir = "bin")
 ```
 
 #### Input Data  
