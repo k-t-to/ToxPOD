@@ -1,7 +1,9 @@
-# UI for POD Estimation Tab
+################################
+# UI for POD Estimation 
+################################
 
-# POD Estimation Tab -----
-# Sidebar 
+### Sidebar ----- 
+# Input data 
 pod_data_panel <- wellPanel(
   radioButtons(inputId = "data_choice",
                label = "Data Source",
@@ -13,6 +15,7 @@ pod_data_panel <- wellPanel(
                              multiple = FALSE))
 )
 
+# POD Estimation Analysis
 pod_analyze_panel <- wellPanel(
   conditionalPanel(condition="output.input_data_table",
                    numericInput(inputId = "resample_size",
@@ -23,33 +26,13 @@ pod_analyze_panel <- wellPanel(
                                 label = "Run Analysis"))
 )
 
+# Download results panel
 pod_dl_panel <- wellPanel(
   conditionalPanel(condition="input.Run",
                    downloadButton("downloadRes", "Download Results"))
 )
 
-bs_run_panel <- conditionalPanel(
-  condition = "input.Run",
-  wellPanel(
-    actionButton(inputId = "bs_summary",
-                 label = "Draw Summary Plot"),
-    hr(),
-    selectInput(inputId = "bs_id",
-                label = "Bootstrap Samples",
-                choices = c(),
-                multiple = TRUE),
-    actionButton(inputId = "plot_bs",
-                 label = "Draw Plots")
-  )
-)
-
-sidebar_panel <- column(4,
-                        pod_data_panel,
-                        pod_analyze_panel,
-                        bs_run_panel,
-                        pod_dl_panel)
-
-# Main Panel
+### Main Panel -----
 input_data_panel <- tabPanel(
   "Input Data",
   fluidRow(
@@ -59,7 +42,6 @@ input_data_panel <- tabPanel(
     column(6,
            dataTableOutput("input_data_table"),
            offset = 3)))
-
 
 result_panel <- tabPanel(
   "Results",
@@ -72,25 +54,3 @@ result_panel <- tabPanel(
            offset = 2)
   )
 )
-
-bs_panel <- tabPanel(
-  "Bootstrap Summary",
-  fluidRow(
-    column(12,
-           plotOutput("bs_summary_plot")),
-    hr(),
-    fluidRow(column(12,
-                    plotOutput("bs_plots")))
-  )
-)
-
-
-main_panel <- column(8,
-         tabsetPanel(id = "POD_Panel",
-                     input_data_panel,
-                     result_panel,
-                     bs_panel))
-  
-
-# pod_tab_layout <- sidebarLayout(pod_sidepanel, pod_mainpanel)
-# pod_tab_layout <- pod_sidepanel
