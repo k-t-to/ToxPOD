@@ -1,19 +1,18 @@
 # Load shiny package
-library(shiny)
-library(DT)
+if (!require("shiny")) install.packages("shiny"); library("shiny")
+if (!require("DT")) install.packages("DT"); library("DT")
 source("functions/functions.R")
 source("functions/make_plots.R")
 
 # Define UI 
 source("ui/pod_estimation_ui.R")
 source("ui/data_explorer_ui.R")
-source("ui/about_ui.R")
 
 ui <- fluidPage(
   theme = "bootstrap.css",
   includeCSS("../www/flatly_theme.css"),
   navbarPage(
-  title = "GRAVEE",
+  title = "ToxPOD",
   id = "nav_bar",
   tabPanel("POD Estimation", icon = icon("play"),
            column(4,
@@ -35,21 +34,15 @@ ui <- fluidPage(
                               bs_sample_main))),
   tabPanel("About", icon = icon("info-circle"),
            fluidRow(
-             about_header,
-             instructions_section,
-             in_example_section,
-             analysis_section,
-             sample_ex_section,
-             license_section,
-             contact_section
-           ))
+             column(8,
+                    includeMarkdown("../README.md"),
+                    offset = 2)))
 ))
 
 server <- function(input, output, session){
   
   source("server/pod_estimation_server.R", local = T)
   source("server/data_explorer_server.R", local = T)
-  source("server/about_server.R", local = T)
   
 }
 

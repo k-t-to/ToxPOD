@@ -8,7 +8,8 @@ bs_view_opts <- wellPanel(
   conditionalPanel(condition = "input.Run",
                    radioButtons(inputId = "viewopt_bs",
                                 label = "View Options",
-                                choices = c("Original Doses", "Log10(Doses)"),
+                                choices = c("Log\u2081\u2080(Doses)" = "Log10(Doses)",
+                                            "Original Doses" = "Original Doses"),
                                 selected = "Log10(Doses)")
   ))
 

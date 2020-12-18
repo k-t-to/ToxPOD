@@ -30,7 +30,7 @@ observeEvent(input_data_plot(),
 # Display input data
 input_data_table <- eventReactive(dr_dat(), {
   formatRound(datatable(do.call("rbind", dr_dat()),
-                        colnames = c("dose", "log10_dose","response"),
+                        colnames = c("Dose", "Log\u2081\u2080(Doses)","Response"),
                         rownames = FALSE,
                         options = list(dom = "tlp")),
               columns = "log10_dose",
@@ -59,7 +59,7 @@ observeEvent(input$Run, {
 # Display result table upon action button click
 pod_res_table <- eventReactive(input$Run, {
   datatable(res()$pods,
-            colnames = c("Bootstrap Index", "POD (Original Scale)", "POD (Log10 Scale)", "Menger Curvature"),
+            colnames = c("Bootstrap Index", "POD (Original Scale)", "POD (Log\u2081\u2080 Scale)", "Menger Curvature"),
             rownames = FALSE,
             options = list(dom = "tlp"))
 })

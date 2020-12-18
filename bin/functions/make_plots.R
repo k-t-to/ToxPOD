@@ -14,7 +14,7 @@ plot_input_data <- function(in_list, dose_opt){
   }else if (dose_opt == "Log10(Doses)"){
     df <- df[,c("log10_dose", "response")]
     colnames(df) <- c("dose", "response")
-    x_ax_lab <- "Log10(Dose)"
+    x_ax_lab <- expression(Log[10](Dose))
   }
   ggplot(df, aes(x = dose, y = response)) + 
     geom_point() + 
@@ -39,7 +39,7 @@ plot_bs <- function(bs_df, n = 50, viewopt) {
   } else if(viewopt == "Log10(Doses)"){
     bs_df <- bs_df[,c("bs_index", "log10_dose", "response")]
     colnames(bs_df)[2] <- "dose"
-    x_ax_lab <- "Log10(Dose)"
+    x_ax_lab <- expression(Log[10](Dose))
   }
   
   
@@ -67,7 +67,7 @@ plot_splines <- function(spline_df, n = 50, viewopt){
   } else if(viewopt == "Log10(Doses)"){
     spline_df <- spline_df[,c("bs_index", "log10_dose", "response_pred")]
     colnames(spline_df)[2] <- "dose"
-    x_ax_lab <- "Log10(Dose)"
+    x_ax_lab <- expression(Log[10](Dose))
   }
   
   ggplot(spline_df, aes(x = dose, y = response_pred, group = bs_index)) + 
@@ -85,7 +85,7 @@ plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt) {
     x_ax_lims <- range(sapply(in_dat, function(x) x$dose[1]))
     pod_qs <- pod_qs$dose
   } else if(viewopt == "Log10(Doses)"){
-    x_ax_lab <- "POD Estimates (Log10 Scale)"
+    x_ax_lab <- expression(POD~Estimates~(Log[10]~Scale))
     x_ax_lims <- range(sapply(in_dat, function(x) x$log10_dose[1]))
     pod_qs <- pod_qs$log10_dose
     pod_df <- pod_df[,c("bs_index", "log10_dose")]
@@ -110,7 +110,7 @@ plot_mc <- function(spline_df, mc_df, pods, bs_id, in_dat, viewopt){
     x_ax_lims <- range(sapply(in_dat, function(x) x$dose[1]))
     
   } else if(viewopt == "Log10(Doses)"){
-    x_ax_lab <- "Log10(Dose)"
+    x_ax_lab <- expression(Log[10](Dose))
     x_ax_lims <- range(sapply(in_dat, function(x) x$log10_dose[1]))
     spline_df <- spline_df[,c("bs_index", "log10_dose", "response_pred")]
     mc_df <- mc_df[,c("bs_index", "log10_dose", "mc")]
@@ -157,8 +157,8 @@ plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt) {
     x_ax_lims <- range(sapply(in_dat, function(x) x$dose[1]))
     
   } else if(viewopt == "Log10(Doses)"){
-    x_ax_line_lab <- "Log10(Dose)"
-    x_ax_hist_lab <- "POD (Log10 Scale)"
+    x_ax_line_lab <- expression(Log[10](Dose))
+    x_ax_hist_lab <- expression(POD~(Log[10]~Scale))
     x_ax_lims <- range(sapply(in_dat, function(x) x$log10_dose[1]))
     spline_df <- spline_df[,c("bs_index", "log10_dose", "response_pred")]
     pod_df <- pod_df[,c("bs_index", "log10_dose", "mc")]

@@ -1,7 +1,7 @@
 ## ToxPOD 
 ### Estimating Point of Departure (POD) from dose-response data using spline meta-regression
 
-This app uses the GRAVEE method for estimating point-of-departure from dose-response data. Doses are transformed to log<sub>10</sub> scale prior to analysis. Dose-response data are bootstrapped and fit to an interpolated-spline model. Menger curvature is calculated at points along the curve, with the point-of-departure defined as the dose with the maximal curvature. 
+This app uses the [GRAVEE](https://github.com/k-t-to/gravee) method for estimating point-of-departure from dose-response data. Doses are transformed to log<sub>10</sub> scale prior to analysis. Dose-response data are bootstrapped and fit to an interpolated-spline model. Menger curvature is calculated at points along the curve, with the point-of-departure defined as the dose with the maximal curvature. 
 
 The source code for this Shiny app is available on [GitHub](https://github.com/k-t-to/gravee_app).
 
@@ -11,7 +11,7 @@ From R, use the following to launch the app:
 
 ```R
 if (!require("shiny")) install.packages("shiny"); library("shiny")
-runGitHub("GRAVEE_App", "k-t-to", subdir = "bin")
+runGitHub("ToxPOD", "k-t-to", subdir = "bin")
 ```
 
 ### Input Data  
