@@ -4,56 +4,35 @@
 
 ### Sidebar ----- 
 # Input data 
-pod_data_panel <- wellPanel(
-  radioButtons(inputId = "data_choice",
-               label = "Data Source",
-               choices = c("User Data", "Example 1", "Example 2", "Example 3"),
-               selected = "User Data"),
-  conditionalPanel(condition = "input.data_choice == 'User Data'",
-                   fileInput(inputId = "input_file",
-                             label = "Upload File",
-                             multiple = FALSE))
-)
-
-# Graph options
-pod_graph_panel <- wellPanel(
-  radioButtons(inputId = "viewopt",
-               label = "View Options",
-               choices = c("Log\u2081\u2080(Doses)" = "Log10(Doses)",
-                           "Original Doses" = "Original Doses")),
-               selected = "Log10(Doses)"
-)
-
 # POD Estimation Analysis
-pod_analyze_panel <- wellPanel(
-  conditionalPanel(condition="output.input_data_table",
+pod_estimate_viewopts_sidebar <- wellPanel(
+                   radioButtons(inputId = "viewopt_pod_estimate",
+                                label = "View Options",
+                                choices = c("Log\u2081\u2080(Doses)" = "Log10(Doses)",
+                                            "Original Doses" = "Original Doses"),
+                                selected = "Log10(Doses)"))
+
+analysis_opt_sidebar <- wellPanel(
                    numericInput(inputId = "resample_size",
                                 label = "Number of Bootstraps",
                                 min = 10,
                                 value = 500),
-                   actionButton(inputId = "Run",
-                                label = "Run Analysis"))
-)
+                   actionButton(inputId = "run_analysis",
+                                label = "Run Analysis",
+                                class = "btn btn-primary"))
+
 
 # Download results panel
-pod_dl_panel <- wellPanel(
-  conditionalPanel(condition="input.Run",
+dl_sidebar <- wellPanel(
+  tags$style(type = "text/css", 
+             "#downloadRes {background-color:#2c3e50; color:#ffffff; border-color:#2c3e50;} #downloadRes:hover {background-color:#000000; border-color:#000000;}"),
+  conditionalPanel(condition="input.run_analysis",
                    downloadButton("downloadRes", "Download Results"))
 )
 
 ### Main Panel -----
-input_data_panel <- tabPanel(
-  "Input Data",
-  fluidRow(
-    column(12, 
-           plotOutput("input_data_plot"),
-           style = "padding-top:20px; padding-bottom:20px"),
-    column(6,
-           dataTableOutput("input_data_table"),
-           offset = 3)))
-
-result_panel <- tabPanel(
-  "Results",
+pod_result_main <- tabPanel(
+  title = "POD Estimates",
   fluidRow(
     column(12,
            plotOutput("pod_dist"),
@@ -63,3 +42,27 @@ result_panel <- tabPanel(
            offset = 2)
   )
 )
+
+bootstrap_summary_main <- tabPanel(
+  title = "Bootstrap Summary",
+  value = "bs_summary_tab",
+  fluidRow(
+    column(12,
+           plotOutput("bs_summary_plot"))
+  )
+)
+  
+
+pod_estimate_tab <- tabPanel(
+  title = "Analysis",
+  icon = icon("play"),
+  fluidRow(
+    column(4,
+           conditionalPanel(
+             condition = "output.input_data_table",
+             analysis_opt_sidebar,
+             pod_estimate_viewopts_sidebar,
+             dl_sidebar)),
+    column(8,
+           tabsetPanel(pod_result_main,
+                       bootstrap_summary_main))))

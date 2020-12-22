@@ -7,7 +7,10 @@ The source code for this Shiny app is available on [GitHub](https://github.com/k
 
 ### Launching the app 
 
-From R, use the following to launch the app: 
+ToxPOD can be accessed at  [https://raptorpharmtox.shinyapps.io/ToxPOD/](https://raptorpharmtox.shinyapps.io/ToxPOD/). 
+
+
+Alternatively, to launch from R, use the following: 
 
 ```R
 if (!require("shiny")) install.packages("shiny"); library("shiny")
@@ -16,7 +19,7 @@ runGitHub("ToxPOD", "k-t-to", subdir = "bin")
 
 ### Input Data  
 
-Upload data as a tab-delimited text file. The data should contain only two columns ordered as dose and response. Doses should **not** be transformed prior to upload. The values must be numeric. 
+Select the method for loading data into the model. User data can be loaded from file or pasted into the text box. Data entries should be delimited by white space (i.e. tabs, spaces).  The data should contain only two columns ordered as dose and response. Doses should **not** be transformed prior to upload. The values must be numeric. 
 
 **Example:**
 
@@ -32,21 +35,21 @@ Upload data as a tab-delimited text file. The data should contain only two colum
 | 10  | 9.45  |
 |...|...|
 
-After uploading a data file, a plot and table of the input data are shown. The doses will be transformed to log<sub>10</sub> scale.
+After loading the data, a plot and table of the input data are shown. The doses will be transformed to log<sub>10</sub> scale.
 
 ### Analysis
 
 All analyses are performed using log<sub>10</sub>-transformed doses. Results are reported on both the original and log<sub>10</sub> scale.
 
-Select the number of bootstrap samples to perform. The default is 500. Click `Run Analysis`. Under the results tab, a distribution of the estimated PODs is shown. Click the Download Results button to download the POD estimates, Menger Curvature calculations, and the POD distribution graphs.
+Select the number of bootstrap samples to perform (default: 500). Click `Run Analysis`. A graph and table of the estimated POD distribution is shown. Under the Bootstrap Summary tab, a graph summarizing the interpolated spline fits and POD distribution is shown. Click the Download Results botton to download the graphs and results tables. 
 
 ### Sample Explorer
 
-After running the main analysis, the Sample Explorer allows the user to visualize the bootstrap resamples.
+After running the main analysis, the Sample Explorer allows the user to visualize the bootstrap resamples. Users may manually select the samples to plot, or have a random selection auto-generated. Alternatively, users may choose to summarize all bootstrap samples.  
 
-The Bootstrap Summary tab will display a summary of the spline-interpolation. The summary plot shows the median predicted response at each dose and the minimum and maximum predicted responses across all bootstraps for each dose. A histogram at the bottom shows how the estimated PODs are distributed across the interpolated doses.
+Click on `Draw Individual Plots` to display graphs showing the fit spline for the selected bootstrap samples and the menger curvatures calculated along the points of the spline curves. Individual plots are not available if all bootstrap samples are selected. 
 
-Under `Bootstrap Samples`, select the numeric IDs of bootstrap samples to plot. `Draw Plots` will display individual graphs of the curves for the selected samples.
+Click on `Draw Summary Plots` to display two line graphs under the Summary Plots tab. The first graph shows the the simulated dose-response values for the selected bootstrap samples. The second graph shows how the interpolated spline was fit to the bootstrapped samples. 
 
 ### License
 
