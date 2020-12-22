@@ -40,29 +40,29 @@ observeEvent(input$random_sample_select, {
     n <- sort(sample(input$resample_size, size = input$random_sample_select))
     bs_id(n)
     updateSelectInput(session, "bs_id", selected = n)}
-},)
-
-# Individual Plots ----- 
-# Get height of plot to draw
-bs_plot_dims <- reactive({
-  c(750,
-    ceiling(length(bs_id())/2 * (750/3)))
-  
 })
 
-# Individual sample plots 
-bs_plots <- eventReactive(
-  c(input$plot_bs_samples, input$viewopt_data_explorer),
-  {
-    if (input$data_explorer_sample_choice != "All") {
-      plot_mc(res()$spline_predictions, res()$menger_curvature, res()$pods, bs_id = as.numeric(bs_id()), dr_dat(), input$viewopt_data_explorer)
-    }
+# Individual Plots ----- 
+calc_h <- function(n) {
+  ceiling(n/2 * 500/3)
+}
+
+viewopt_de <- reactiveVal("Log10(Doses)")
+
+observeEvent(input$viewopt_data_explorer, {
+  viewopt_de(input$viewopt_data_explorer)
+})
+
+h <- eventReactive(input$plot_bs_samples, {
+  calc_h(length(bs_id()))
+})
+
+bs_plots <- eventReactive(c(input$plot_bs_samples, viewopt_de()), {
+      plot_mc(res()$spline_predictions, res()$menger_curvature, res()$pods, bs_id = as.numeric(bs_id()), dr_dat(), viewopt_de())
   }
 )
 
-observeEvent(input$plot_bs_samples, {
-  output$bs_plots <- withProgress(renderPlot(bs_plots(), width = bs_plot_dims()[1], height = bs_plot_dims()[2]), message = "Drawing Sample Plots...")
-})
+output$bs_plots <- renderPlot(bs_plots(), height = function(){h()})
 
 # Switch tabs
 observeEvent(input$plot_bs_samples, {
@@ -70,6 +70,7 @@ observeEvent(input$plot_bs_samples, {
 })
 
 # Summary Plots ----- 
+
 bs_resample_plot <- eventReactive(c(input$plot_bs_summary, input$viewopt_data_explorer),
                                   plot_bs(res()$bootstrap_values, bs_id(), input$viewopt_data_explorer))
 bs_splinefit_plot <- eventReactive(c(input$plot_bs_summary, input$viewopt_data_explorer),

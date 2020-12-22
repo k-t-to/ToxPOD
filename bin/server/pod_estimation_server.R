@@ -16,39 +16,16 @@ pod_res_table <- eventReactive(input$run_analysis, {
             options = list(dom = "tlp"))
 })
 
-# Display results table
+# Display results
+output$pod_dist <- renderPlot({plot_pod_dist(res()$pods, res()$pod_quantile, dr_dat(), input$viewopt_pod_estimate)})
+
 output$table <- renderDataTable({
   formatRound(pod_res_table(), columns = c(2,3,4), digits = 2)
 })
 
-# Draw plot of pod distribution
-pod_dist_dose <- eventReactive(input$run_analysis,
-                               plot_pod_dist(res()$pods, res()$pod_quantile, dr_dat(), "Original Doses"))
-
-pod_dist_log <- eventReactive(input$run_analysis,
-                               plot_pod_dist(res()$pods, res()$pod_quantile, dr_dat(), "Log10(Doses)"))
-
-observeEvent(input$viewopt_pod_estimate, {
-  if (input$viewopt_pod_estimate == "Original Doses") {
-    output$pod_dist <- renderPlot(pod_dist_dose())
-  } else if (input$viewopt_pod_estimate == "Log10(Doses)") {
-    output$pod_dist <- renderPlot(pod_dist_log())
-  }
-})
-
 # Draw bootstrap summary plot 
-bs_summary_dose <- eventReactive(input$run_analysis,
-                                 plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), "Original Doses"))
-bs_summary_log <- eventReactive(input$run_analysis,
-                                 plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), "Log10(Doses)"))
+output$bs_summary_plot <- renderPlot({plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), input$viewopt_pod_estimate)})
 
-observeEvent(input$viewopt_pod_estimate, {
-  if (input$viewopt_pod_estimate == "Original Doses") {
-    output$bs_summary_plot <- renderPlot(bs_summary_dose())
-  } else if (input$viewopt_pod_estimate == "Log10(Doses)") {
-    output$bs_summary_plot <- renderPlot(bs_summary_log())
-  }
-})
 
 # Save results 
 output$downloadRes <- downloadHandler(
@@ -58,7 +35,7 @@ output$downloadRes <- downloadHandler(
   content = function(file){
     dir   <- getwd()
     setwd(tempdir()); on.exit(setwd(dir))
-    files <- c("input_data.txt", "analysis_parameters.txt", "pod_results.txt", "mc_results.txt", "pod_dist.png", "pod_dist_log.png", "bs_summary.png", "bs_summary_log.png")
+    files <- c("input_data.txt", "analysis_parameters.txt", "pod_results.txt", "mc_results.txt", "pod_dist.pdf", "pod_dist_log.pdf", "bs_summary.pdf", "bs_summary_log.pdf")
     # Input data
     in_dat <- data.frame(do.call("rbind",dr_dat()), row.names = NULL)
     write.table(in_dat, files[1], row.names = F, sep = "\t", quote = FALSE)
@@ -92,11 +69,20 @@ output$downloadRes <- downloadHandler(
     spline_res$mc <- mc_res$mc[match(interaction(spline_res$bs_index, spline_res$dose), interaction(mc_res$bs_index, mc_res$dose))]
     write.table(spline_res, files[4], row.names = F, sep = "\t", quote = FALSE)
     # pod distribution
-    ggplot2::ggsave(files[5], pod_dist_dose(), width = 8, height = 4, unit = "in")
-    ggplot2::ggsave(files[6], pod_dist_log(), width = 8, height = 4, unit = "in")
+    pdf(files[5], width = 8, height = 4)
+    plot_pod_dist(res()$pods, res()$pod_quantile, dr_dat(), "Original Doses")
+    dev.off()
+    pdf(files[6], width = 8, height = 4)
+    plot_pod_dist(res()$pods, res()$pod_quantile, dr_dat(), "Log10(Doses)")
+    dev.off()
     # bootstrap summary
-    ggplot2::ggsave(files[7], bs_summary_dose(), width = 8, height = 6, unit = "in")
-    ggplot2::ggsave(files[8], bs_summary_log(), width = 8, height = 6, unit = "in")
+    pdf(files[7])
+    plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), "Original Doses")
+    dev.off()
+    pdf(files[8])
+    plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), "Log10(Doses)")
+    dev.off()
+    
     zip(file, files)
   },
   contentType = "application/zip"
