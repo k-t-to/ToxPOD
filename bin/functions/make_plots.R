@@ -43,6 +43,8 @@ plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt, op = op_def) {
     pod_df <- pod_df[,c("bs_index", "log10_dose")]
     colnames(pod_df)[2] <- "dose"
   }
+  quant_labs <- paste0(names(pod_qs), " = ", round(pod_qs, 2))
+  
   par(mar=c(5.1, 4.1, 4.1, 8.1), xpd = F)
   d <- density(pod_df$dose)
   plot(d,
@@ -55,8 +57,7 @@ plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt, op = op_def) {
   box(lwd = 2, bty = "l")
   polygon(d, col=rgb(1,0.75,0.15,0.5))
   abline(v = pod_qs, lty = c("dotted", "solid", "dashed"), col = "blue", lwd = 2)
-  par(xpd = T)
-  legend("topright", legend = names(pod_qs), col = "blue", lty = c("dotted", "solid", "dashed"), title = "Quantiles", lwd = 2, inset = c(-0.15,0), cex = 0.75)
+  legend("topright", bg = "white", legend = quant_labs, col = "blue", lty = c("dotted", "solid", "dashed"), title = "Quantiles", lwd = 2, inset = c(-0.15,0), cex = 0.75, xpd = T)
   par(op)
 }
 
