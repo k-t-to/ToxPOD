@@ -1,5 +1,8 @@
 # dev.off()
-op_def <- par()
+op_def <- par(mar = c(5.1, 4.1, 4.1, 2.1),
+              xpd = F,
+              oma = c(0,0,0,0),
+              fig = c(0,1,0,1))
 
 # Input Data ----- 
 
@@ -54,7 +57,7 @@ plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt, op = op_def) {
   abline(v = pod_qs, lty = c("dotted", "solid", "dashed"), col = "blue", lwd = 2)
   par(xpd = T)
   legend("topright", legend = names(pod_qs), col = "blue", lty = c("dotted", "solid", "dashed"), title = "Quantiles", lwd = 2, inset = c(-0.15,0), cex = 0.75)
-  suppressWarnings(par(op))
+  par(op)
 }
 
 # Bootstrap summary: splines + histogram 
@@ -108,7 +111,7 @@ plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt, op = op_def) {
   par(mar = c(5, 4, 0, 2) + 0.1)
   hist(pod_df$dose, xlim = x_ax_lims, col = "gray", breaks = unique(spline_df$dose), main = "", xlab = x_ax_hist_lab)
   box(lwd = 2, bty = "l")
-  suppressWarnings(par(op)); layout(1)
+  par(op); layout(1)
 }
 
 
@@ -183,13 +186,13 @@ plot_mc <- function(spline_df, mc_df, pods, bs_ids, in_dat, viewopt, op = op_def
   }
   mtext(x_ax_lab, side = 1, line = 2, outer = T, cex = 0.8)
   mtext("Predicted Response", side = 2, line = 2, outer = T, cex = 0.8)
-  suppressWarnings(par(op))
+  par(op)
   par(xpd = T)
   text(1.25, 0.5, "Menger Curvature", srt = 270, cex = 0.8)
   par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0.5, 0, 0, 0), new = TRUE)
   plot(0, 0, type = 'l', bty = 'n', xaxt = 'n', yaxt = 'n')
   legend("bottom", legend = c("Spline Fit", "Menger Curvature", "POD"), lwd = 2, lty = c("solid", "solid", NA), pch = c(NA, NA, 20), col = c("blue", "goldenrod1", "black"), xpd = T, horiz = T, text.width = c(0.33,0.33,0.33), bty = "n", cex = 0.8)
-  suppressWarnings(par(op))
+  par(op)
 }
 
 plot_bs <- function(bs_df, bs_ids, viewopt) {
