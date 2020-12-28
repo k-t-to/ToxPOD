@@ -6,6 +6,8 @@ my_theme <- theme_classic() +
         panel.grid.major = element_line(),
         panel.grid.minor = element_line())
 
+# Input Data ----- 
+
 plot_input_data <- function(in_list, dose_opt){
   df <- do.call("rbind", in_list)
   if(dose_opt == "Original Doses"){
@@ -24,61 +26,8 @@ plot_input_data <- function(in_list, dose_opt){
     my_theme
 }
 
-plot_bs <- function(bs_df, n = 50, viewopt) {
-  bs_ids <- unique(bs_df$bs_index)
-  n_bs <- length(bs_ids)
-  if (n_bs > n){
-    bs_ids <- sample(bs_ids, n)
-    bs_df <- bs_df[bs_df$bs_index %in% bs_ids,]
-  }
-  
-  plot_title <- paste0("Bootstrap Sample Plot (", length(bs_ids), " of ", n_bs, " samples)")
-  
-  if (viewopt == "Original Doses") {
-    x_ax_lab <- "Dose"
-  } else if(viewopt == "Log10(Doses)"){
-    bs_df <- bs_df[,c("bs_index", "log10_dose", "response")]
-    colnames(bs_df)[2] <- "dose"
-    x_ax_lab <- expression(Log[10](Dose))
-  }
-  
-  
-  ggplot(bs_df, aes(x = dose, y = response, group = as.factor(bs_index))) + 
-    geom_point(alpha = 0.25) + 
-    geom_path(alpha = 0.25) + 
-    labs(x = x_ax_lab,
-         y = "Response",
-         title = plot_title) + 
-    my_theme
-}
-
-plot_splines <- function(spline_df, n = 50, viewopt){
-  bs_ids <- unique(spline_df$bs_index)
-  n_bs <- length(bs_ids)
-  if (n_bs > n) {
-    bs_ids <- sample(bs_ids, n)
-    spline_df <- spline_df[spline_df$bs_index %in% bs_ids,]
-  }
-  
-  plot_title <- paste0("Plot of Bootstrapped Spline Predictions (", length(bs_ids), " of ", n_bs, " samples)")
-
-  if (viewopt == "Original Doses") {
-    x_ax_lab <- "Dose"
-  } else if(viewopt == "Log10(Doses)"){
-    spline_df <- spline_df[,c("bs_index", "log10_dose", "response_pred")]
-    colnames(spline_df)[2] <- "dose"
-    x_ax_lab <- expression(Log[10](Dose))
-  }
-  
-  ggplot(spline_df, aes(x = dose, y = response_pred, group = bs_index)) + 
-    geom_point(alpha = 0.25) + 
-    geom_path(alpha = 0.25) + 
-    labs(x = x_ax_lab,
-         y = "Predicted Response",
-         title = plot_title) + 
-    my_theme
-}
-
+# Analysis ----- 
+# Distribution of PODs
 plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt) {
   if (viewopt == "Original Doses") {
     x_ax_lab <- "POD Estimates (Original Scale)"
@@ -104,52 +53,7 @@ plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt) {
     my_theme
 }
 
-plot_mc <- function(spline_df, mc_df, pods, bs_id, in_dat, viewopt){
-  if (viewopt == "Original Doses") {
-    x_ax_lab <- "Dose"
-    x_ax_lims <- range(sapply(in_dat, function(x) x$dose[1]))
-    
-  } else if(viewopt == "Log10(Doses)"){
-    x_ax_lab <- expression(Log[10](Dose))
-    x_ax_lims <- range(sapply(in_dat, function(x) x$log10_dose[1]))
-    spline_df <- spline_df[,c("bs_index", "log10_dose", "response_pred")]
-    mc_df <- mc_df[,c("bs_index", "log10_dose", "mc")]
-    pods <- pods[,c("bs_index", "log10_dose", "mc")]
-    colnames(spline_df)[2] <- "dose"
-    colnames(mc_df)[2] <- "dose"
-    colnames(pods)[2] <- "dose"
-  }
-  
-  # Get data from bootstrap samples
-  spline_df <- spline_df[spline_df$bs_index %in% bs_id,]
-  mc_df <- mc_df[mc_df$bs_index %in% bs_id,]
-  pods <- pods[pods$bs_index %in% bs_id,]
-  
-  # Scale y axis for MC
-  reducer <- max(spline_df$response_pred)/max(mc_df$mc)
-  
-  # Create facet labels
-  spline_df$bs_index <- paste0("Bootstrap Sample ", spline_df$bs_index)
-  mc_df$bs_index <- paste0("Bootstrap Sample ", mc_df$bs_index)
-  pods$bs_index <- paste0("Bootstrap Sample ", pods$bs_index)
-  
-  ggplot(spline_df, aes(x = dose, y = response_pred)) + 
-    geom_line(aes(color = "spline_line")) + 
-    geom_line(data = mc_df, aes(color = "mc_line", x = dose, y = mc * reducer)) + 
-    geom_point(data = pods, aes(x = dose, y = mc * reducer, color = "pod_pt")) + 
-    scale_y_continuous(sec.axis = sec_axis(~./reducer, name = "Menger Curvature")) +
-    labs(x = x_ax_lab,
-         y = "Predicted Response"
-         ) + 
-    scale_color_manual(name = "Legend",
-                       values = c("blue", "goldenrod1", "black"),
-                       limits = c("spline_line", "mc_line", "pod_pt"),
-                       labels = c("Spline Curve", "Menger Curvature", "POD")) +
-    theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + 
-    xlim(x_ax_lims) + 
-    facet_wrap(.~bs_index, ncol = 2)
-}
-
+# Bootstrap summary: splines + histogram 
 plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt) {
   if (viewopt == "Original Doses") {
     x_ax_line_lab <- "Dose"
@@ -191,3 +95,101 @@ plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt) {
     my_theme
   grid.arrange(spline_plot, pod_plot, layout_matrix = matrix(c(1,1,1,2)))
 }
+
+# Sample Explorer ----- 
+plot_mc <- function(spline_df, mc_df, pods, bs_id, in_dat, viewopt){
+  if (viewopt == "Original Doses") {
+    x_ax_lab <- "Dose"
+    x_ax_lims <- range(sapply(in_dat, function(x) x$dose[1]))
+    
+  } else if(viewopt == "Log10(Doses)"){
+    x_ax_lab <- expression(Log[10](Dose))
+    x_ax_lims <- range(sapply(in_dat, function(x) x$log10_dose[1]))
+    spline_df <- spline_df[,c("bs_index", "log10_dose", "response_pred")]
+    mc_df <- mc_df[,c("bs_index", "log10_dose", "mc")]
+    pods <- pods[,c("bs_index", "log10_dose", "mc")]
+    colnames(spline_df)[2] <- "dose"
+    colnames(mc_df)[2] <- "dose"
+    colnames(pods)[2] <- "dose"
+  }
+  
+  # Get data from bootstrap samples
+  spline_df <- spline_df[spline_df$bs_index %in% bs_id,]
+  mc_df <- mc_df[mc_df$bs_index %in% bs_id,]
+  pods <- pods[pods$bs_index %in% bs_id,]
+  
+  # Scale y axis for MC
+  reducer <- max(spline_df$response_pred)/max(mc_df$mc)
+  
+  # Create facet labels
+  facet_levels <- sort(bs_id)
+  facet_labels <- paste0("Bootstrap Sample ", facet_levels)
+  spline_df$bs_index <- factor(spline_df$bs_index, levels = facet_levels, labels = facet_labels)
+  mc_df$bs_index <- factor(mc_df$bs_index, levels = facet_levels, labels = facet_labels)
+  pods$bs_index <- factor(pods$bs_index, levels = facet_levels, labels = facet_labels)
+  
+  ggplot(spline_df, aes(x = dose, y = response_pred)) + 
+    geom_line(aes(color = "spline_line")) + 
+    geom_line(data = mc_df, aes(color = "mc_line", x = dose, y = mc * reducer)) + 
+    geom_point(data = pods, aes(x = dose, y = mc * reducer, color = "pod_pt")) + 
+    scale_y_continuous(sec.axis = sec_axis(~./reducer, name = "Menger Curvature")) +
+    labs(x = x_ax_lab,
+         y = "Predicted Response"
+    ) + 
+    scale_color_manual(name = "Legend",
+                       values = c("blue", "goldenrod1", "black"),
+                       limits = c("spline_line", "mc_line", "pod_pt"),
+                       labels = c("Spline Curve", "Menger Curvature", "POD")) +
+    theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + 
+    xlim(x_ax_lims) + 
+    facet_wrap(.~bs_index, ncol = 2)
+}
+
+plot_bs <- function(bs_df, bs_ids, viewopt) {
+  n_bs <- length(unique(bs_df$bs_index))
+  bs_df <- bs_df[bs_df$bs_index %in% bs_ids,]
+  
+  plot_title <- paste0("Bootstrap Sample Plot (", length(bs_ids), " of ", n_bs, " samples)")
+  
+  if (viewopt == "Original Doses") {
+    x_ax_lab <- "Dose"
+  } else if(viewopt == "Log10(Doses)"){
+    bs_df <- bs_df[,c("bs_index", "log10_dose", "response")]
+    colnames(bs_df)[2] <- "dose"
+    x_ax_lab <- expression(Log[10](Dose))
+  }
+  
+  ggplot(bs_df, aes(x = dose, y = response, group = as.factor(bs_index))) + 
+    geom_point(alpha = 0.25) + 
+    geom_path(alpha = 0.25) + 
+    labs(x = x_ax_lab,
+         y = "Response",
+         title = plot_title) + 
+    my_theme
+}
+
+plot_splines <- function(spline_df, bs_ids, viewopt){
+  n_bs <- length(unique(spline_df$bs_index))
+  spline_df <- spline_df[spline_df$bs_index %in% bs_ids,]
+  
+  plot_title <- paste0("Plot of Interpolated Spline Predictions (", length(bs_ids), " of ", n_bs, " samples)")
+
+  if (viewopt == "Original Doses") {
+    x_ax_lab <- "Dose"
+  } else if(viewopt == "Log10(Doses)"){
+    spline_df <- spline_df[,c("bs_index", "log10_dose", "response_pred")]
+    colnames(spline_df)[2] <- "dose"
+    x_ax_lab <- expression(Log[10](Dose))
+  }
+  
+  ggplot(spline_df, aes(x = dose, y = response_pred, group = bs_index)) + 
+    geom_point(alpha = 0.25) + 
+    geom_path(alpha = 0.25) + 
+    labs(x = x_ax_lab,
+         y = "Predicted Response",
+         title = plot_title) + 
+    my_theme
+}
+
+
+

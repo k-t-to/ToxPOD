@@ -8,7 +8,7 @@ data_checks <- function(dat, dr_threshold) {
     stop("Data should contain 2 columns")
   }
   # Doses and responses should be numeric
-  if (any(apply(dat, 2, class) != "numeric")) {
+  if (any(apply(dat, 2, function(x) !is.numeric(x)))) {
     stop("Doses and responses should be numeric")
   }
   # Need at least 4 doses 
@@ -28,9 +28,14 @@ data_checks <- function(dat, dr_threshold) {
 }
 
 # Function to read in data
-parse_data <- function(data_file_path, dr_threshold = 0.8) {
+parse_data <- function(in_val, in_type, dr_threshold = 0.8) {
   # Read in data
-  dat <- read.table(data_file_path, header = T)
+  if (in_type == "file") {
+    dat <- read.table(in_val, header = T)
+  } else if (in_type == "str") {
+    dat <- read.table(text = in_val, header = T)
+  }
+  
   # Check data format
   data_checks(dat, dr_threshold = dr_threshold)
   # Convert doses to log10 scale
