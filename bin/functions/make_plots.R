@@ -40,9 +40,10 @@ plot_pod_dist <- function(pod_df, in_dat, viewopt, pod_qs = c(0.05, 0.95), op = 
     pod_df <- pod_df[,c("bs_index", "log10_dose")]
     colnames(pod_df)[2] <- "dose"
   }
-  
+
   pod_q_l <- quantile(pod_df$dose, pod_qs[1])
   pod_q_u <- quantile(pod_df$dose, pod_qs[2])
+
   d <- density(pod_df$dose)
   ql_id <- min(which(d$x >= pod_q_l))
   qu_id <- max(which(d$x < pod_q_u))
@@ -64,6 +65,7 @@ plot_pod_dist <- function(pod_df, in_dat, viewopt, pod_qs = c(0.05, 0.95), op = 
        main = "Distribution of POD Estimates",
        frame.plot = F)
   box(lwd = 2, bty = "l")
+
   polygon(d, col="gray")
   segments(x0 = pod_q_l, y0 = 0, x1 = pod_q_l, y1 = ql_y1, lwd = 3, col = "blue")
   segments(x0 = pod_q_u, y0 = 0, x1 = pod_q_u, y1 = qu_y1, lwd = 3, col = "blue")
@@ -89,6 +91,7 @@ plot_pod_dist <- function(pod_df, in_dat, viewopt, pod_qs = c(0.05, 0.95), op = 
   plot(0, 0, type='n', bty='n', xaxt='n', yaxt='n', xlab = "", ylab = "")
   legend("topright", legend = legend_labs, col = legend_cols, lty = legend_lines, title = "Quantiles", lwd = 3, cex = 0.75)
   if (median_line | mean_line) legend("right", legend = legend_labs_d, col = legend_cols_d, lty = legend_lines_d, lwd = 3, cex = 0.75)
+
   par(op)
 }
 # Bootstrap summary: splines + histogram 
