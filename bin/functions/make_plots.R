@@ -1,10 +1,8 @@
-if (!require("ggplot2")) install.packages("ggplot2"); library("ggplot2")
-if (!require("gridExtra")) install.packages("gridExtra"); library("gridExtra")
-
-my_theme <- theme_classic() + 
-  theme(plot.title = element_text(hjust = 0.5),
-        panel.grid.major = element_line(),
-        panel.grid.minor = element_line())
+# dev.off()
+op_def <- par(mar = c(5.1, 4.1, 4.1, 2.1),
+              xpd = F,
+              oma = c(0,0,0,0),
+              fig = c(0,1,0,1))
 
 # Input Data ----- 
 
@@ -18,17 +16,22 @@ plot_input_data <- function(in_list, dose_opt){
     colnames(df) <- c("dose", "response")
     x_ax_lab <- expression(Log[10](Dose))
   }
-  ggplot(df, aes(x = dose, y = response)) + 
-    geom_point() + 
-    labs(x = x_ax_lab,
-         y = "Response",
-         title = "Input Data Plot") + 
-    my_theme
+  plot(x = df$dose,
+       y = df$response,
+       panel.first = grid(),
+       xlab = x_ax_lab,
+       ylab = "Response",
+       main = "Input Data Type",
+       pch = 16,
+       frame.plot = F,
+       yaxt = "n")
+  box(lwd = 2, bty = "l")
+  axis(side = 2, las = 2)
 }
 
 # Analysis ----- 
 # Distribution of PODs
-plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt) {
+plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt, op = op_def) {
   if (viewopt == "Original Doses") {
     x_ax_lab <- "POD Estimates (Original Scale)"
     x_ax_lims <- range(sapply(in_dat, function(x) x$dose[1]))
@@ -40,21 +43,26 @@ plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt) {
     pod_df <- pod_df[,c("bs_index", "log10_dose")]
     colnames(pod_df)[2] <- "dose"
   }
-  pod_qs <- data.frame(q = names(pod_qs), pod = pod_qs)
+  quant_labs <- paste0(names(pod_qs), " = ", round(pod_qs, 2))
   
-  pod_qs$q <- paste0(pod_qs$q, " = ", round(pod_qs$pod, 4))
-  ggplot(pod_df, aes(x = dose)) + 
-    geom_density(fill = "goldenrod1", alpha = 0.5) + 
-    geom_vline(data = pod_qs, aes(xintercept = pod, linetype = q), color = "blue", alpha = 0.5, lwd = 1) +
-    labs(x = x_ax_lab,
-         title = "Distribution of POD Estimates") + 
-    scale_linetype_discrete(name = "Quantiles") + 
-    xlim(x_ax_lims) + 
-    my_theme
+  par(mar=c(5.1, 4.1, 4.1, 8.1), xpd = F)
+  d <- density(pod_df$dose)
+  plot(d,
+       panel.first = grid(),
+       xlab = x_ax_lab,
+       ylab = "Density",
+       xlim = x_ax_lims,
+       main = "Distribution of POD Estimates",
+       frame.plot = F)
+  box(lwd = 2, bty = "l")
+  polygon(d, col=rgb(1,0.75,0.15,0.5))
+  abline(v = pod_qs, lty = c("dotted", "solid", "dashed"), col = "blue", lwd = 2)
+  legend("topright", bg = "white", legend = quant_labs, col = "blue", lty = c("dotted", "solid", "dashed"), title = "Quantiles", lwd = 2, inset = c(-0.15,0), cex = 0.75, xpd = T)
+  par(op)
 }
 
 # Bootstrap summary: splines + histogram 
-plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt) {
+plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt, op = op_def) {
   if (viewopt == "Original Doses") {
     x_ax_line_lab <- "Dose"
     x_ax_hist_lab <- "POD (Original Scale)"
@@ -71,33 +79,45 @@ plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt) {
   }
   
   spline_df <- do.call("rbind", by(spline_df, spline_df$dose, function(dat) {
-    data.frame(dose = dat$dose[1],min_resp = min(dat$response_pred), med_resp = median(dat$response_pred), max_resp = max(dat$response_pred))
+    data.frame(dose = dat$dose[1],
+               min_resp = min(dat$response_pred), 
+               med_resp = median(dat$response_pred), 
+               max_resp = max(dat$response_pred),
+               q05_resp = quantile(dat$response_pred, 0.05),
+               q95_resp = quantile(dat$response_pred, 0.95))
   }))
-  rownames(spline_df) <- NULL
+  ribbon <- function(type = c("minmax", "quant")) {
+    grid()
+    if (type == "minmax") {
+      polygon(x = c(spline_df$dose, rev(spline_df$dose)), y = c(spline_df$min_resp, rev(spline_df$max_resp)), col=rgb(1,0.75,0.15,0.5), border = F)
+    } else if (type == "quant") {
+      polygon(x = c(spline_df$dose, rev(spline_df$dose)), y = c(spline_df$q05_resp, rev(spline_df$q95_resp)), col=rgb(1,0.75,0.15,0.5), border = F)
+    }
+  }
   
-  spline_plot <- ggplot(spline_df, aes(x = dose, y = med_resp, ymin = min_resp, ymax = max_resp)) + 
-    geom_ribbon(alpha = 0.5, fill = "goldenrod1") + 
-    geom_point(aes(color = "med")) + 
-    geom_line() + 
-    labs(x = x_ax_line_lab,
-         y = "Predicted Response",
-         title = "Spline Fit Summary") + 
-    scale_color_manual(name = "", values = "black", limits = "med", labels = "Median Response") + 
-    my_theme + 
-    xlim(x_ax_lims) + 
-    theme(legend.position = "top")
-  pod_plot <- ggplot(pod_df, aes(x = dose)) + 
-    geom_histogram(breaks = unique(pod_df$dose)) + 
-    labs(x = x_ax_hist_lab,
-         y = "Frequency",
-         title = "POD Distribution") + 
-    xlim(x_ax_lims) + 
-    my_theme
-  grid.arrange(spline_plot, pod_plot, layout_matrix = matrix(c(1,1,1,2)))
+  layout(matrix(c(1,1,1,2), ncol = 1))
+  
+  plot(spline_df$dose, 
+       spline_df$med_resp,
+       panel.first = ribbon("minmax"),
+       xlab = x_ax_line_lab,
+       ylab = "Predicted Response",
+       main = "Spline Fit Summary",
+       pch = 20,
+       type = "b",
+       frame.plot = F,
+       xlim = x_ax_lims)
+  box(lwd = 2, bty = "l")
+  legend("bottomright", legend = "Median Response", col = "black", pch = 16, lty = "solid", cex = 0.75, bg = rgb(1,1,1,0.5))
+  par(mar = c(5, 4, 0, 2) + 0.1)
+  hist(pod_df$dose, xlim = x_ax_lims, col = "gray", breaks = unique(spline_df$dose), main = "", xlab = x_ax_hist_lab)
+  box(lwd = 2, bty = "l")
+  par(op); layout(1)
 }
 
+
 # Sample Explorer ----- 
-plot_mc <- function(spline_df, mc_df, pods, bs_id, in_dat, viewopt){
+plot_mc <- function(spline_df, mc_df, pods, bs_ids, in_dat, viewopt, op = op_def) {
   if (viewopt == "Original Doses") {
     x_ax_lab <- "Dose"
     x_ax_lims <- range(sapply(in_dat, function(x) x$dose[1]))
@@ -113,36 +133,67 @@ plot_mc <- function(spline_df, mc_df, pods, bs_id, in_dat, viewopt){
     colnames(pods)[2] <- "dose"
   }
   
-  # Get data from bootstrap samples
-  spline_df <- spline_df[spline_df$bs_index %in% bs_id,]
-  mc_df <- mc_df[mc_df$bs_index %in% bs_id,]
-  pods <- pods[pods$bs_index %in% bs_id,]
+  # Get y limits
+  y_ax_lims <- c(min(spline_df$response_pred) - 0.1, max(spline_df$response_pred) + 0.1)
   
-  # Scale y axis for MC
-  reducer <- max(spline_df$response_pred)/max(mc_df$mc)
+  # Create plotting layout
+  n_bs <- length(bs_ids)
+  n_c <- 2
+  n_r <- ceiling(n_bs/n_c)
+  lay_mat <- matrix(1:(n_c * n_r), ncol = n_c, byrow = T)
   
-  # Create facet labels
-  facet_levels <- sort(bs_id)
-  facet_labels <- paste0("Bootstrap Sample ", facet_levels)
-  spline_df$bs_index <- factor(spline_df$bs_index, levels = facet_levels, labels = facet_labels)
-  mc_df$bs_index <- factor(mc_df$bs_index, levels = facet_levels, labels = facet_labels)
-  pods$bs_index <- factor(pods$bs_index, levels = facet_levels, labels = facet_labels)
+  # Set up logicals for drawing axis labels
+  y_resp_ax <- lay_mat[,1]
+  x_ax <- sort(lay_mat[lay_mat <= n_bs], decreasing = T)[1:n_c]
+  tmp <- lay_mat
+  tmp[tmp > n_bs] <- NA
+  y_mc_ax <- apply(tmp, 1, max, na.rm = T)
   
-  ggplot(spline_df, aes(x = dose, y = response_pred)) + 
-    geom_line(aes(color = "spline_line")) + 
-    geom_line(data = mc_df, aes(color = "mc_line", x = dose, y = mc * reducer)) + 
-    geom_point(data = pods, aes(x = dose, y = mc * reducer, color = "pod_pt")) + 
-    scale_y_continuous(sec.axis = sec_axis(~./reducer, name = "Menger Curvature")) +
-    labs(x = x_ax_lab,
-         y = "Predicted Response"
-    ) + 
-    scale_color_manual(name = "Legend",
-                       values = c("blue", "goldenrod1", "black"),
-                       limits = c("spline_line", "mc_line", "pod_pt"),
-                       labels = c("Spline Curve", "Menger Curvature", "POD")) +
-    theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + 
-    xlim(x_ax_lims) + 
-    facet_wrap(.~bs_index, ncol = 2)
+  layout(lay_mat)
+  par(mar = c(1,1,1,1), oma = c(8,5,2,5))
+  for (i in 1:n_bs) {
+    sp_temp <- spline_df[spline_df$bs_index == bs_ids[i],]
+    mc_temp <- mc_df[mc_df$bs_index == bs_ids[i],]
+    pod_temp <- pods[pods$bs_index == bs_ids[i],]
+    plot_title <- paste0("Bootstrap Sample ", bs_ids[i])
+    
+    plot(sp_temp$dose,
+         sp_temp$response_pred,
+         type = "l",
+         col = "blue",
+         lwd = 2,
+         panel.first = grid(),
+         xlim = x_ax_lims,
+         ylim = y_ax_lims,
+         xlab = "",
+         ylab = "",
+         xaxt = "n",
+         yaxt = "n")
+    title(main = plot_title, cex.main = 1, font.main = 1)
+    if (i %in% x_ax) axis(side = 1)
+    if (i %in% y_resp_ax) axis(side = 2, las = 2)
+    par(new = T)
+    plot(mc_temp$dose,
+         mc_temp$mc,
+         type = "l",
+         col = "goldenrod1",
+         lwd = 2,
+         xaxt = "n",
+         yaxt = "n",
+         xlab = "",
+         ylab = "")
+    if (i %in% y_mc_ax) axis(side = 4, las = 2)
+    points(x = pod_temp$dose, y = pod_temp$mc, pch = 20)
+  }
+  mtext(x_ax_lab, side = 1, line = 2, outer = T, cex = 0.8)
+  mtext("Predicted Response", side = 2, line = 2, outer = T, cex = 0.8)
+  par(op)
+  par(xpd = T)
+  text(1.25, 0.5, "Menger Curvature", srt = 270, cex = 0.8)
+  par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0.5, 0, 0, 0), new = TRUE)
+  plot(0, 0, type = 'l', bty = 'n', xaxt = 'n', yaxt = 'n')
+  legend("bottom", legend = c("Spline Fit", "Menger Curvature", "POD"), lwd = 2, lty = c("solid", "solid", NA), pch = c(NA, NA, 20), col = c("blue", "goldenrod1", "black"), xpd = T, horiz = T, text.width = c(0.33,0.33,0.33), bty = "n", cex = 0.8)
+  par(op)
 }
 
 plot_bs <- function(bs_df, bs_ids, viewopt) {
@@ -159,21 +210,33 @@ plot_bs <- function(bs_df, bs_ids, viewopt) {
     x_ax_lab <- expression(Log[10](Dose))
   }
   
-  ggplot(bs_df, aes(x = dose, y = response, group = as.factor(bs_index))) + 
-    geom_point(alpha = 0.25) + 
-    geom_path(alpha = 0.25) + 
-    labs(x = x_ax_lab,
-         y = "Response",
-         title = plot_title) + 
-    my_theme
+  # Start plot
+  plot(bs_df$dose,
+       bs_df$response,
+       panel.first = grid(),
+       pch = 20,
+       col = rgb(0,0,0,0.25),
+       xlab = x_ax_lab,
+       ylab = "Response",
+       main = plot_title,
+       yaxt = "n",
+       frame.plot = F)
+  box(lwd = 2, bty = "l")
+  axis(2, las = 2)
+  for (i in bs_ids) {
+    tmp <- bs_df[bs_df$bs_index == i,]
+    lines(tmp$dose,
+          tmp$response,
+          col = rgb(0,0,0,0.25))
+  }
 }
 
-plot_splines <- function(spline_df, bs_ids, viewopt){
+plot_splines <- function(spline_df, bs_ids, viewopt) {
   n_bs <- length(unique(spline_df$bs_index))
   spline_df <- spline_df[spline_df$bs_index %in% bs_ids,]
   
   plot_title <- paste0("Plot of Interpolated Spline Predictions (", length(bs_ids), " of ", n_bs, " samples)")
-
+  
   if (viewopt == "Original Doses") {
     x_ax_lab <- "Dose"
   } else if(viewopt == "Log10(Doses)"){
@@ -182,14 +245,23 @@ plot_splines <- function(spline_df, bs_ids, viewopt){
     x_ax_lab <- expression(Log[10](Dose))
   }
   
-  ggplot(spline_df, aes(x = dose, y = response_pred, group = bs_index)) + 
-    geom_point(alpha = 0.25) + 
-    geom_path(alpha = 0.25) + 
-    labs(x = x_ax_lab,
-         y = "Predicted Response",
-         title = plot_title) + 
-    my_theme
+  # Start plot
+  plot(spline_df$dose,
+       spline_df$response_pred,
+       panel.first = grid(),
+       pch = 20,
+       col = rgb(0,0,0,0.25),
+       xlab = x_ax_lab,
+       ylab = "Predicted Response",
+       main = plot_title,
+       yaxt = "n",
+       frame.plot = F)
+  box(lwd = 2, bty = "l")
+  axis(2, las = 2)
+  for (i in bs_ids) {
+    tmp <- spline_df[spline_df$bs_index == i,]
+    lines(tmp$dose,
+          tmp$response_pred,
+          col = rgb(0,0,0,0.25))
+  }
 }
-
-
-

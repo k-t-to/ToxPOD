@@ -32,12 +32,7 @@ observeEvent(input$load_pasted, {
 dr_dat <- eventReactive(req(dat_path()), parse_data(dat_path(), in_type()))
 
 # Plot input data
-
-input_data_plot <- eventReactive(c(dr_dat(), input$viewopt_input),
-                                 plot_input_data(dr_dat(), input$viewopt_input))
-
-observeEvent(input_data_plot(),
-             output$input_data_plot <- renderPlot(input_data_plot()))
+output$input_data_plot <- renderPlot({plot_input_data(dr_dat(), input$viewopt_input)})
 
 # Display input data
 input_data_table <- eventReactive(dr_dat(), {
