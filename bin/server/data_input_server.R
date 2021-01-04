@@ -37,7 +37,7 @@ output$input_data_plot <- renderPlot({plot_input_data(dr_dat(), input$viewopt_in
 # Display input data
 input_data_table <- eventReactive(dr_dat(), {
   formatRound(datatable(do.call("rbind", dr_dat()),
-                        colnames = c("Dose", "Log\u2081\u2080(Dose + 1)","Response"),
+                        colnames = c("Dose", "Log\u2081\u2080(Dose)","Response"),
                         rownames = FALSE,
                         options = list(dom = "tlp")),
               columns = "log10_dose",

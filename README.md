@@ -19,7 +19,7 @@ runGitHub("ToxPOD", "k-t-to", subdir = "bin")
 
 ### Input Data  
 
-Select the method for loading data into the model. User data can be loaded from file or pasted into the text box. Data entries should be delimited by white space (i.e. tabs, spaces).  The data should contain only two columns ordered as dose and response. Doses should **not** be transformed prior to upload. The values must be numeric. 
+Select the method for loading data into the model. User data can be loaded from file or pasted into the text box. Data entries should be delimited by white space (i.e. tabs, spaces).  The data should contain only two columns ordered as dose and response. Analysis requires that the data have at least 4 non-zero doses. Doses should **not** be transformed prior to upload. The values must be numeric. 
 
 **Example:**
 
@@ -35,7 +35,7 @@ Select the method for loading data into the model. User data can be loaded from 
 | 10  | 9.45  |
 |...|...|
 
-After loading the data, a plot and table of the input data are shown. The doses will be transformed to log<sub>10</sub> scale.
+After loading the data, a plot and table of the input data are shown. Data entries with Dose = 0 are removed. The doses will be transformed to log<sub>10</sub> scale. 
 
 ### Analysis
 

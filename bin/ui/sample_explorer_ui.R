@@ -9,7 +9,7 @@ data_explorer_viewopts_sidebar <- wellPanel(
   hr(style = "border-color:#919aa1; padding-top:2px; margin-top:5px; margin-bottom:5px"),
   radioButtons(inputId = "viewopt_data_explorer",
                label = "Dose Scale",
-               choices = c("Log\u2081\u2080(Dose + 1)" = "Log10(Doses)",
+               choices = c("Log\u2081\u2080(Dose)" = "Log10(Doses)",
                            "Original Dose" = "Original Doses"),
                selected = "Log10(Doses)"))
 

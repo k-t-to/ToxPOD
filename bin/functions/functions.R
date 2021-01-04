@@ -1,31 +1,6 @@
 if(!require("splines")) install.packages("splines")
 
 # Parse dose response data -----
-# Function to check input data format
-data_checks <- function(dat, dr_threshold) {
-  # Data should contain only two columns 
-  if (ncol(dat) != 2) {
-    stop("Data should contain 2 columns")
-  }
-  # Doses and responses should be numeric
-  if (any(apply(dat, 2, function(x) !is.numeric(x)))) {
-    stop("Doses and responses should be numeric")
-  }
-  # Need at least 4 doses 
-  n_doses <- length(unique(dat[,1]))
-  if (n_doses < 4) {
-    stop("At least 4 doses required for spline interpolation")
-  }
-  
-  # Want doses to have more than one response
-  # Number of doses
-  dose_check <- ceiling(n_doses * dr_threshold)
-  if (sum(table(dat[,1]) >= 3) < dose_check) {
-    stop(paste0("Insufficient Data. At least ", 
-                dose_check, 
-                " doses require at least 3 responses"))
-  }
-}
 
 # Function to read in data
 parse_data <- function(in_val, in_type, dr_threshold = 0.8) {
@@ -37,10 +12,37 @@ parse_data <- function(in_val, in_type, dr_threshold = 0.8) {
   }
   
   # Check data format
-  data_checks(dat, dr_threshold = dr_threshold)
-  # Convert doses to log10 scale
+  # Data should contain only two columns 
+  if (ncol(dat) != 2) {
+    stop("Data should contain 2 columns")
+  }
+  # Doses and responses should be numeric
+  if (any(apply(dat, 2, function(x) !is.numeric(x)))) {
+    stop("Doses and responses should be numeric")
+  }
+  
+  # Rename columns of data
   colnames(dat) <- c("dose", "response")
-  dat$log10_dose <- log10(dat$dose + 1)
+  # Remove zero dose 
+  dat <- dat[dat[,1] != 0,]
+  
+  # Need at least 4 doses 
+  n_doses <- length(unique(dat[,1]))
+  if (n_doses < 4) {
+    stop("At least 4 non-zero doses required for spline interpolation")
+  }
+  
+  # Want doses to have more than one response
+  # Number of doses
+  dose_check <- ceiling(n_doses * dr_threshold)
+  if (sum(table(dat[,1]) >= 3) < dose_check) {
+    stop(paste0("Insufficient Data. At least ", 
+                dose_check, 
+                " doses require at least 3 responses"))
+  }
+  
+  # Convert doses to log10 scale
+  dat$log10_dose <- log10(dat$dose)
   dat <- dat[,c("dose", "log10_dose", "response")]
   # Format data as list
   dat <- split(dat, dat[,1])
@@ -151,7 +153,7 @@ calculate_pod_quantiles <- function(dat,
   spline_values <- do.call("rbind", spline_values)
   rownames(spline_values) <- NULL
   # Add back original dose
-  spline_values$dose <- (10^spline_values$log10_dose) - 1
+  spline_values$dose <- (10^spline_values$log10_dose)
   spline_values <- spline_values[,c("bs_index", "dose", "log10_dose", "response_pred")]
   
   # Extract Menger Curvature calculations
@@ -163,7 +165,7 @@ calculate_pod_quantiles <- function(dat,
   mc_values <- do.call("rbind", mc_values)
   rownames(mc_values) <- NULL
   # Add back original dose
-  mc_values$dose <- (10^mc_values$log10_dose) - 1
+  mc_values$dose <- (10^mc_values$log10_dose)
   mc_values <- mc_values[,c("bs_index", "dose", "log10_dose", "mc")]
   
   pod_values <- lapply(names(pods), function(bs_index) {
@@ -174,7 +176,7 @@ calculate_pod_quantiles <- function(dat,
   pod_values <- do.call("rbind", pod_values)
   rownames(pod_values) <- NULL
   # Add back original dose
-  pod_values$dose <- (10^pod_values$log10_dose) - 1
+  pod_values$dose <- (10^pod_values$log10_dose)
   pod_values <- pod_values[,c("bs_index", "dose", "log10_dose", "mc")]
   
   pod_quantiles <- list(dose = quantile(pod_values$dose, probs = quantile_probs),

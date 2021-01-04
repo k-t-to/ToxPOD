@@ -12,7 +12,7 @@ plot_input_data <- function(in_list, dose_opt){
   }else if (dose_opt == "Log10(Doses)"){
     df <- df[,c("log10_dose", "response")]
     colnames(df) <- c("dose", "response")
-    x_ax_lab <- expression(Log[10](Dose + 1))
+    x_ax_lab <- expression(Log[10](Dose))
   }
   plot(x = df$dose,
        y = df$response,
@@ -153,7 +153,7 @@ plot_mc <- function(spline_df, mc_df, pods, bs_ids, in_dat, viewopt, op = op_def
     x_ax_lims <- range(sapply(in_dat, function(x) x$dose[1]))
     
   } else if(viewopt == "Log10(Doses)"){
-    x_ax_lab <- expression(Log[10](Dose + 1))
+    x_ax_lab <- expression(Log[10](Dose))
     x_ax_lims <- range(sapply(in_dat, function(x) x$log10_dose[1]))
     spline_df <- spline_df[,c("bs_index", "log10_dose", "response_pred")]
     mc_df <- mc_df[,c("bs_index", "log10_dose", "mc")]
@@ -240,7 +240,7 @@ plot_bs <- function(bs_df, bs_ids, viewopt) {
   } else if(viewopt == "Log10(Doses)"){
     bs_df <- bs_df[,c("bs_index", "log10_dose", "response")]
     colnames(bs_df)[2] <- "dose"
-    x_ax_lab <- expression(Log[10](Dose + 1))
+    x_ax_lab <- expression(Log[10](Dose))
   }
   
   # Start plot
@@ -275,7 +275,7 @@ plot_splines <- function(spline_df, bs_ids, viewopt) {
   } else if(viewopt == "Log10(Doses)"){
     spline_df <- spline_df[,c("bs_index", "log10_dose", "response_pred")]
     colnames(spline_df)[2] <- "dose"
-    x_ax_lab <- expression(Log[10](Dose + 1))
+    x_ax_lab <- expression(Log[10](Dose))
   }
   
   # Start plot
