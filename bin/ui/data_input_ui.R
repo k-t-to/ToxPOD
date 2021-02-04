@@ -43,11 +43,13 @@ input_data_sidebar <- wellPanel(
 
 # Graph options
 input_view_opts_sidebar <- wellPanel(
+  p(strong("View Options"), align = "center", style = "color:#919aa1; text-transform: uppercase; padding:0px; margin:0px"),
+  hr(style = "border-color:#919aa1; padding-top:2px; margin-top:5px; margin-bottom:5px"),
   radioButtons(inputId = "viewopt_input",
-               label = "View Options",
-               choices = c("Log\u2081\u2080(Doses)" = "Log10(Doses)",
-                           "Original Doses" = "Original Doses")),
-  selected = "Log10(Doses)"
+               label = "Dose Scale",
+               choices = c("Log\u2081\u2080(Dose)" = "Log10(Doses)",
+                           "Original Dose" = "Original Doses"), 
+               selected = "Log10(Doses)"),
 )
 
 ### Main Panel -----
