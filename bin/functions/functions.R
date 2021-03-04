@@ -126,7 +126,7 @@ perform_bootstrap <- function(dat, interpolated_doses) {
 calculate_pod_quantiles <- function(dat,
                                     resample_size = 1000,
                                     interpolation_size = 50,
-                                    quantile_probs = c(0.05, 0.5, 0.95)) {
+                                    quantile_probs = c(0.025, 0.5, 0.975)) {
   dose_vector <- sapply(dat, function(x) x$log10_dose[1])
   interpolated_doses <- calculate_interpolated_doses(dose_vector = dose_vector, 
                                                      length.out = interpolation_size)
