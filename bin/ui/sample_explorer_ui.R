@@ -5,10 +5,12 @@
 ### Sidebar ----- 
 # View options
 data_explorer_viewopts_sidebar <- wellPanel(
+  p(strong("View Options"), align = "center", style = "color:#919aa1; text-transform: uppercase; padding:0px; margin:0px"),
+  hr(style = "border-color:#919aa1; padding-top:2px; margin-top:5px; margin-bottom:5px"),
   radioButtons(inputId = "viewopt_data_explorer",
-               label = "View Options",
-               choices = c("Log\u2081\u2080(Doses)" = "Log10(Doses)",
-                           "Original Doses" = "Original Doses"),
+               label = "Dose Scale",
+               choices = c("Log\u2081\u2080(Dose)" = "Log10(Doses)",
+                           "Original Dose" = "Original Doses"),
                selected = "Log10(Doses)"))
 
 # Summary selections
@@ -35,7 +37,7 @@ data_explorer_sample_choice_sidebar <- wellPanel(
     actionButton(inputId = "reset_bs_samples",
                  label = "Reset Selected Samples",
                  class = "btn btn-secondary btn-sm")),
-  hr(style = "border-top: 1px solid #343a40;"),
+  hr(style = "border-color:#919aa1;"),
   conditionalPanel(
     condition = "input.data_explorer_sample_choice !== 'All'",
     actionButton(inputId = "plot_bs_samples",

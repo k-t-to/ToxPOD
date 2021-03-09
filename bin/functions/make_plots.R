@@ -1,8 +1,6 @@
 # dev.off()
-op_def <- par(mar = c(5.1, 4.1, 4.1, 2.1),
-              xpd = F,
-              oma = c(0,0,0,0),
-              fig = c(0,1,0,1))
+op_def <- par()
+op_def <- op_def[!names(op_def) %in% c("cin", "cra", "csi", "cxy", "din", "page")]
 
 # Input Data ----- 
 
@@ -31,22 +29,34 @@ plot_input_data <- function(in_list, dose_opt){
 
 # Analysis ----- 
 # Distribution of PODs
-plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt, op = op_def) {
+plot_pod_dist <- function(pod_df, in_dat, viewopt, pod_qs = c(0.05, 0.95), op = op_def, median_line = T, mean_line = F) {
+  pod_qs <- sort(pod_qs)
   if (viewopt == "Original Doses") {
     x_ax_lab <- "POD Estimates (Original Scale)"
     x_ax_lims <- range(sapply(in_dat, function(x) x$dose[1]))
-    pod_qs <- pod_qs$dose
   } else if(viewopt == "Log10(Doses)"){
     x_ax_lab <- expression(POD~Estimates~(Log[10]~Scale))
     x_ax_lims <- range(sapply(in_dat, function(x) x$log10_dose[1]))
-    pod_qs <- pod_qs$log10_dose
     pod_df <- pod_df[,c("bs_index", "log10_dose")]
     colnames(pod_df)[2] <- "dose"
   }
-  quant_labs <- paste0(names(pod_qs), " = ", round(pod_qs, 2))
-  
-  par(mar=c(5.1, 4.1, 4.1, 8.1), xpd = F)
+
+  pod_q_l <- quantile(pod_df$dose, pod_qs[1])
+  pod_q_u <- quantile(pod_df$dose, pod_qs[2])
+
   d <- density(pod_df$dose)
+  ql_id <- min(which(d$x >= pod_q_l))
+  qu_id <- max(which(d$x < pod_q_u))
+  ql_y1 <- d$y[ql_id]
+  qu_y1 <- d$y[qu_id]
+  dd <- approxfun(d)
+  legend_labs <- paste0(pod_qs * 100, "% = ", c(round(pod_q_l, 2), round(pod_q_u, 2)))
+  legend_lines <- c("solid", "solid")
+  legend_cols <- c("blue", "blue")
+  
+  legend_labs_d <- legend_lines_d <- legend_cols_d <- c()
+  
+  par(mar = c(5.1,4.1,4.1,8.1))
   plot(d,
        panel.first = grid(),
        xlab = x_ax_lab,
@@ -55,12 +65,35 @@ plot_pod_dist <- function(pod_df, pod_qs, in_dat, viewopt, op = op_def) {
        main = "Distribution of POD Estimates",
        frame.plot = F)
   box(lwd = 2, bty = "l")
-  polygon(d, col=rgb(1,0.75,0.15,0.5))
-  abline(v = pod_qs, lty = c("dotted", "solid", "dashed"), col = "blue", lwd = 2)
-  legend("topright", bg = "white", legend = quant_labs, col = "blue", lty = c("dotted", "solid", "dashed"), title = "Quantiles", lwd = 2, inset = c(-0.15,0), cex = 0.75, xpd = T)
+
+  polygon(d, col="gray")
+  segments(x0 = pod_q_l, y0 = 0, x1 = pod_q_l, y1 = ql_y1, lwd = 3, col = "blue")
+  segments(x0 = pod_q_u, y0 = 0, x1 = pod_q_u, y1 = qu_y1, lwd = 3, col = "blue")
+  with(d, polygon(x = c(x[c(ql_id, ql_id:qu_id, qu_id)]), y = c(0, y[ql_id: qu_id], 0), density = 20, border = NA))
+  if (median_line) {
+    med <- median(pod_df$dose)
+    med_y <- dd(med)
+    segments(x0 = med, y0 = 0, x1 = med, y1 = med_y, lwd = 3, col = "orange")
+    legend_labs_d <- c(legend_labs_d, paste0("Median = ", round(med, 2)))
+    legend_lines_d <- c(legend_lines_d, "solid")
+    legend_cols_d <- c(legend_cols_d, "orange")
+  }
+  if (mean_line) {
+    avg <- mean(pod_df$dose)
+    avg_y <- dd(avg)
+    segments(x0 = avg, y0 = 0, x1 = avg, y1 = avg_y, lwd = 3, col = "orange", lty = "dotted")
+    legend_labs_d <- c(legend_labs_d, paste0("Mean = ", round(avg, 2)))
+    legend_lines_d <- c(legend_lines_d, "dotted")
+    legend_cols_d <- c(legend_cols_d, "orange")
+  }
+  
+  par(fig=c(0, 1, 0, 1), oma=c(0, 0, 0, 0), mar=c(4.1, 0, 4.1, 0), new=TRUE)
+  plot(0, 0, type='n', bty='n', xaxt='n', yaxt='n', xlab = "", ylab = "")
+  legend("topright", legend = legend_labs, col = legend_cols, lty = legend_lines, title = "Quantiles", lwd = 3, cex = 0.75)
+  if (median_line | mean_line) legend("right", legend = legend_labs_d, col = legend_cols_d, lty = legend_lines_d, lwd = 3, cex = 0.75)
+
   par(op)
 }
-
 # Bootstrap summary: splines + histogram 
 plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt, op = op_def) {
   if (viewopt == "Original Doses") {
@@ -135,6 +168,7 @@ plot_mc <- function(spline_df, mc_df, pods, bs_ids, in_dat, viewopt, op = op_def
   
   # Get y limits
   y_ax_lims <- c(min(spline_df$response_pred) - 0.1, max(spline_df$response_pred) + 0.1)
+  y_mc_lims <- c(min(mc_df$mc) - 0.1, max(mc_df$mc) + 0.1)
   
   # Create plotting layout
   n_bs <- length(bs_ids)
@@ -180,6 +214,8 @@ plot_mc <- function(spline_df, mc_df, pods, bs_ids, in_dat, viewopt, op = op_def
          lwd = 2,
          xaxt = "n",
          yaxt = "n",
+         xlim = x_ax_lims,
+         ylim = y_mc_lims,
          xlab = "",
          ylab = "")
     if (i %in% y_mc_ax) axis(side = 4, las = 2)
@@ -188,11 +224,11 @@ plot_mc <- function(spline_df, mc_df, pods, bs_ids, in_dat, viewopt, op = op_def
   mtext(x_ax_lab, side = 1, line = 2, outer = T, cex = 0.8)
   mtext("Predicted Response", side = 2, line = 2, outer = T, cex = 0.8)
   par(op)
-  par(xpd = T)
-  text(1.25, 0.5, "Menger Curvature", srt = 270, cex = 0.8)
+  par(xpd = T, fig = c(0.95, 1, 0,1))
+  text(0.5,0.5, "Menger Curvature", srt = 270, adj = 0.5, cex = 0.8)
   par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0.5, 0, 0, 0), new = TRUE)
-  plot(0, 0, type = 'l', bty = 'n', xaxt = 'n', yaxt = 'n')
-  legend("bottom", legend = c("Spline Fit", "Menger Curvature", "POD"), lwd = 2, lty = c("solid", "solid", NA), pch = c(NA, NA, 20), col = c("blue", "goldenrod1", "black"), xpd = T, horiz = T, text.width = c(0.33,0.33,0.33), bty = "n", cex = 0.8)
+  plot(0, 0, type = 'l', bty = 'n', xaxt = 'n', yaxt = 'n', xlab = "", ylab = "")
+  legend("bottom", legend = c("Spline Fit", "Menger Curvature", "POD"), lwd = 2, lty = c("solid", "solid", NA), pch = c(NA, NA, 20), col = c("blue", "goldenrod1", "black"), xpd = T, horiz = T, bty = "n")
   par(op)
 }
 

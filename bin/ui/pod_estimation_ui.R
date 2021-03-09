@@ -6,11 +6,29 @@
 # Input data 
 # POD Estimation Analysis
 pod_estimate_viewopts_sidebar <- wellPanel(
+                   p(strong("View Options"), align = "center", style = "color:#919aa1; text-transform: uppercase; padding:0px; margin:0px"),
+                   hr(style = "border-color:#919aa1; padding-top:2px; margin-top:5px; margin-bottom:5px"),
                    radioButtons(inputId = "viewopt_pod_estimate",
-                                label = "View Options",
-                                choices = c("Log\u2081\u2080(Doses)" = "Log10(Doses)",
-                                            "Original Doses" = "Original Doses"),
-                                selected = "Log10(Doses)"))
+                                label = "Dose Scale",
+                                choices = c("Log\u2081\u2080(Dose)" = "Log10(Doses)",
+                                            "Original Dose" = "Original Doses"),
+                                selected = "Log10(Doses)"),
+                   checkboxGroupInput(inputId = "viewopt_ctr",
+                                      label = "Center Lines",
+                                      choices = c("Median", "Mean"),
+                                      selected = "Median"),
+                   numericInput(inputId = "pod_ql",
+                                label = "Quantile Lower Bound",
+                                min = 0,
+                                max = 0.5,
+                                value = 0.05,
+                                step = 0.05),
+                   numericInput(inputId = "pod_qu",
+                                label = "Quantile Upper Bound",
+                                min = 0.5,
+                                max = 1,
+                                value = 0.95,
+                                step = 0.05))
 
 analysis_opt_sidebar <- wellPanel(
                    numericInput(inputId = "resample_size",

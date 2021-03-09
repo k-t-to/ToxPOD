@@ -17,7 +17,19 @@ pod_res_table <- eventReactive(input$run_analysis, {
 })
 
 # Display results
-output$pod_dist <- renderPlot({plot_pod_dist(res()$pods, res()$pod_quantile, dr_dat(), input$viewopt_pod_estimate)})
+
+med_line <- reactiveVal(TRUE)
+mean_line <- reactiveVal(FALSE)
+observeEvent(input$viewopt_ctr,{
+             if ("Median" %in% input$viewopt_ctr) med_line(T) else med_line(F)
+             if ("Mean" %in% input$viewopt_ctr) mean_line(T) else mean_line(F)})
+
+output$pod_dist <- renderPlot({plot_pod_dist(pod_df = res()$pods, 
+                                             in_dat = dr_dat(), 
+                                             viewopt = input$viewopt_pod_estimate,
+                                             pod_qs = c(input$pod_ql, input$pod_qu),
+                                             median_line = med_line(),
+                                             mean_line = mean_line())})
 
 output$table <- renderDataTable({
   formatRound(pod_res_table(), columns = c(2,3,4), digits = 2)
@@ -35,7 +47,11 @@ output$downloadRes <- downloadHandler(
   content = function(file){
     dir   <- getwd()
     setwd(tempdir()); on.exit(setwd(dir))
-    files <- c("input_data.txt", "analysis_parameters.txt", "pod_results.txt", "mc_results.txt", "pod_dist.pdf", "pod_dist_log.pdf", "bs_summary.pdf", "bs_summary_log.pdf")
+    files <- c("input_data.txt", "analysis_parameters.txt",
+               "pod_results_intervals.txt", "pod_results_all.txt",
+               "mc_results.txt", "pod_dist.pdf", "pod_dist_log.pdf", 
+               "bs_summary.pdf", "bs_summary_log.pdf")
+    
     # Input data
     in_dat <- data.frame(do.call("rbind",dr_dat()), row.names = NULL)
     write.table(in_dat, files[1], row.names = F, sep = "\t", quote = FALSE)
@@ -59,27 +75,43 @@ output$downloadRes <- downloadHandler(
                          Value = params,
                          row.names = NULL)
     write.table(params, files[2], row.names = F, sep = "\t", quote = FALSE)
+    # Quantile results
+    quants <- sort(unique(c(input$pod_ql, input$pod_qu, 0.05, 0.95, 0.5)))
+    quant_res <- rbind(quantile(res()$pods$dose, quants), quantile(res()$pods$log10_dose, quants))
+    quant_res <- data.frame(" " = c("POD (Original Scale)", "POD (Log Scale)"), quant_res, check.names = F)
+    write.table(quant_res, files[3], row.names = F, sep = "\t", quote = FALSE)
     # pod results
     pod_res <- res()$pods
     colnames(pod_res) <- c("bs_index", "pod", "log10_pod", "mc")
-    write.table(pod_res, files[3], row.names = F, sep = "\t", quote = FALSE)
+    write.table(pod_res, files[4], row.names = F, sep = "\t", quote = FALSE)
     # spline + mc results
     mc_res <- res()$menger_curvature
     spline_res <- res()$spline_predictions
     spline_res$mc <- mc_res$mc[match(interaction(spline_res$bs_index, spline_res$dose), interaction(mc_res$bs_index, mc_res$dose))]
-    write.table(spline_res, files[4], row.names = F, sep = "\t", quote = FALSE)
-    # pod distribution
-    pdf(files[5], width = 8, height = 4)
-    plot_pod_dist(res()$pods, res()$pod_quantile, dr_dat(), "Original Doses")
-    dev.off()
+    write.table(spline_res, files[5], row.names = F, sep = "\t", quote = FALSE)
+    
+   # pod distribution
     pdf(files[6], width = 8, height = 4)
-    plot_pod_dist(res()$pods, res()$pod_quantile, dr_dat(), "Log10(Doses)")
+    plot_pod_dist(pod_df = res()$pods, 
+                  in_dat = dr_dat(), 
+                  viewopt = "Original Doses",
+                  pod_qs = c(input$pod_ql, input$pod_qu),
+                  median_line = med_line(),
+                  mean_line = mean_line())
+    dev.off()
+    pdf(files[7], width = 8, height = 4)
+    plot_pod_dist(pod_df = res()$pods, 
+                  in_dat = dr_dat(), 
+                  viewopt = "Log10(Doses)",
+                  pod_qs = c(input$pod_ql, input$pod_qu),
+                  median_line = med_line(),
+                  mean_line = mean_line())
     dev.off()
     # bootstrap summary
-    pdf(files[7])
+    pdf(files[8])
     plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), "Original Doses")
     dev.off()
-    pdf(files[8])
+    pdf(files[9])
     plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), "Log10(Doses)")
     dev.off()
     
