@@ -13,28 +13,32 @@ pod_estimate_viewopts_sidebar <- wellPanel(
                                 choices = c("Log\u2081\u2080(Dose)" = "Log10(Doses)",
                                             "Original Dose" = "Original Doses"),
                                 selected = "Log10(Doses)"),
-                   checkboxGroupInput(inputId = "viewopt_ctr",
-                                      label = "Center Lines",
-                                      choices = c("Median", "Mean"),
-                                      selected = "Median"),
+                   p("Center Lines", align = "left", style = "font-weight:700; margin-bottom:5px;"),
+                   checkboxInput(inputId = "med_line",
+                                 label = "Median",
+                                 value = T),
+                   div(style = "margin-bottom:-10px"),
+                   checkboxInput(inputId = "mean_line",
+                                 label = "Mean",
+                                 value = F),
                    numericInput(inputId = "pod_ql",
-                                label = "Quantile Lower Bound",
+                                label = "Credible Interval Lower Bound",
                                 min = 0,
                                 max = 0.5,
-                                value = 0.05,
-                                step = 0.05),
+                                value = 0.025,
+                                step = 0.025),
                    numericInput(inputId = "pod_qu",
-                                label = "Quantile Upper Bound",
+                                label = "Credible Interval Upper Bound",
                                 min = 0.5,
                                 max = 1,
-                                value = 0.95,
-                                step = 0.05))
+                                value = 0.975,
+                                step = 0.025))
 
 analysis_opt_sidebar <- wellPanel(
                    numericInput(inputId = "resample_size",
                                 label = "Number of Bootstraps",
                                 min = 10,
-                                value = 500),
+                                value = 1000),
                    actionButton(inputId = "run_analysis",
                                 label = "Run Analysis",
                                 class = "btn btn-primary"))
@@ -56,7 +60,7 @@ pod_result_main <- tabPanel(
            plotOutput("pod_dist"),
            style = "padding-bottom:30px"),
     column(8,
-           dataTableOutput("table"),
+           dataTableOutput("pod_table"),
            offset = 2)
   )
 )
@@ -66,7 +70,11 @@ bootstrap_summary_main <- tabPanel(
   value = "bs_summary_tab",
   fluidRow(
     column(12,
-           plotOutput("bs_summary_plot"))
+           plotOutput("bs_summary_plot"),
+           style = "padding-bottom:30px"),
+    column(8,
+           dataTableOutput("bs_table"),
+           offset = 2)
   )
 )
   

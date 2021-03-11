@@ -44,7 +44,9 @@ observeEvent(input$random_sample_select, {
 
 # Individual Plots ----- 
 calc_h <- function(n) {
-  ceiling(n/2 * 500/3)
+  if(n > 2){
+    (ceiling(n/2) * 400) + 30
+  } else {500}
 }
 
 viewopt_de <- reactiveVal("Log10(Doses)")
@@ -72,9 +74,9 @@ observeEvent(input$plot_bs_samples, {
 # Summary Plots ----- 
 
 bs_resample_plot <- eventReactive(c(input$plot_bs_summary, input$viewopt_data_explorer),
-                                  plot_bs(res()$bootstrap_values, bs_id(), input$viewopt_data_explorer))
+                                  plot_bs(res()$bootstrap_values, bs_id(), dr_dat(), input$viewopt_data_explorer))
 bs_splinefit_plot <- eventReactive(c(input$plot_bs_summary, input$viewopt_data_explorer),
-                                   plot_splines(res()$spline_predictions, bs_id(), input$viewopt_data_explorer))
+                                   plot_splines(res()$spline_predictions, bs_id(), dr_dat(), input$viewopt_data_explorer))
 
 observeEvent(input$plot_bs_summary, {
   output$resample_plot <- withProgress(renderPlot(bs_resample_plot()), message = "Drawing Bootstrap Samples...")

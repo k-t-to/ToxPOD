@@ -35,10 +35,16 @@ input_data_sidebar <- wellPanel(
   conditionalPanel(condition = "input.data_source == 'Example'",
                    radioButtons(inputId = "example_choice",
                                 label = "Select Example Data",
-                                choices = c("Evenly Spaced Doses" = "Example 1",
-                                            "Variably Spaced Doses" = "Example 2",
-                                            "Poor Data" = "Example 3"),
-                                selected = "Poor Data"))
+                                choices = c("Pretty" = "Example 1",
+                                            "High Variance" = "Example 2",
+                                            "No Asymptote" = "Example 3"),
+                                selected = "Poor Data")),
+  div(style = "margin-bottom:-10px"),
+  actionButton(inputId = "data_info",
+               label = "Data Requirements",
+               class = "btn btn-link",
+               style = "margin-left:-10px"),
+  div(style = "margin-bottom:-10px")
 )
 
 # Graph options

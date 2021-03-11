@@ -1,5 +1,6 @@
 # Load shiny package
 if (!require("shiny")) install.packages("shiny"); library("shiny")
+if (!require("shinyalert")) install.packages("shinyalert"); library("shinyalert")
 if (!require("DT")) install.packages("DT"); library("DT")
 source("functions/functions.R")
 source("functions/make_plots.R")
@@ -12,6 +13,7 @@ source("ui/sample_explorer_ui.R")
 ui <- fluidPage(
   theme = "bootstrap.css",
   includeCSS("../www/flatly_theme.css"),
+  useShinyalert(),
   navbarPage(
   title = "ToxPOD",
   id = "nav_bar",

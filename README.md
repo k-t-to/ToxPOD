@@ -3,7 +3,7 @@
 
 This app uses the [GRAVEE](https://github.com/k-t-to/gravee) method for estimating point-of-departure from dose-response data. Doses are transformed to log<sub>10</sub> scale prior to analysis. Dose-response data are bootstrapped and fit to an interpolated-spline model. Menger curvature is calculated at points along the curve, with the point-of-departure defined as the dose with the maximal curvature. 
 
-The source code for this Shiny app is available on [GitHub](https://github.com/k-t-to/gravee_app).
+The source code for this Shiny app is available on [GitHub](https://github.com/k-t-to/ToxPOD).
 
 ### Launching the app 
 
@@ -17,9 +17,9 @@ if (!require("shiny")) install.packages("shiny"); library("shiny")
 runGitHub("ToxPOD", "k-t-to", subdir = "bin")
 ```
 
-### Input Data  
+### Input Data   
 
-Select the method for loading data into the model. User data can be loaded from file or pasted into the text box. Data entries should be delimited by white space (i.e. tabs, spaces).  The data should contain only two columns ordered as dose and response. Analysis requires that the data have at least 4 non-zero doses. Each non-zero dose should have at least 3 data points (replicates), otherwise they are excluded from the analysis. Doses should **not** be transformed prior to upload. The values must be numeric. 
+Select the method for loading data into the model. User data can be loaded from file or pasted into the text box. Data entries should be delimited by white space (i.e. tabs, spaces).  The data should contain only two columns ordered as dose and response. The first row should be the column headers. Analysis requires that the data have at least 4 doses. Each dose should have at least 3 data points (replicates), otherwise they are excluded from the analysis. Doses should **not** be transformed prior to upload. The values must be numeric. 
 
 **Example:**
 
@@ -35,13 +35,15 @@ Select the method for loading data into the model. User data can be loaded from 
 | 10  | 9.45  |
 |...|...|
 
-After loading the data, a plot and table of the input data are shown. Data entries with Dose = 0 are removed. The doses will be transformed to log<sub>10</sub> scale. 
+After loading the data, a plot and table of the input data are shown. The doses will be transformed to log<sub>10</sub> scale.  If the input data contain a dose = 0, the 0 dose is converted to be 1/10th the minimum non-zero dose, so that after log transformation, the distance between the 0 dose and the minimum non-zero dose is 1.  
 
 ### Analysis
 
-All analyses are performed using log<sub>10</sub>-transformed doses. Results are reported on both the original and log<sub>10</sub> scale.
+All analyses are performed using log<sub>10</sub>-transformed doses. Results are back-transformed and reported on the original dose scale.  
 
-Select the number of bootstrap samples to perform (default: 500). Click `Run Analysis`. A graph and table of the estimated POD distribution is shown. Under the Bootstrap Summary tab, a graph summarizing the interpolated spline fits and POD distribution is shown. Click the Download Results botton to download the graphs and results tables. 
+Select the number of bootstrap samples to perform (default: 1000). Click `Run Analysis`. A graph and table of the estimated POD distribution is shown. Under the Bootstrap Summary tab, a graph summarizing the interpolated spline fits and POD distribution is shown. Click the `Download Results` botton to download the graphs and results tables.
+
+**Note:** PODs and interpolated doses less than the minimum non-zero dose are rescaled to be left-bound by 0. Thus, in the downloaded results, for PODs and interpolated doses less than the minimum non-zero dose, values in the `log10` columns will not be equal to log<sub>10</sub>(`dose`). 
 
 ### Sample Explorer
 
