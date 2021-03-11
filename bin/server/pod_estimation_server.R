@@ -41,7 +41,7 @@ output$pod_dist <- renderPlot({plot_pod_dist(pod_df = res()$pods,
                                              mean_line = input$mean_line)})
 
 output$pod_table <- output$bs_table <- renderDataTable({
-  formatRound(pod_res_table(), columns = c(2,3), digits = 2)
+  formatSignif(pod_res_table(), columns = c(2,3), digits = 4)
 })
 
 # Draw bootstrap summary plot 
