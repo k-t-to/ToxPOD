@@ -8,35 +8,50 @@ res <- eventReactive(input$run_analysis, {
   withProgress(calculate_pod_quantiles(dr_dat(), resample_size = input$resample_size), message = "Calculating...")
 })
 
+observeEvent(input$run_analysis|input$pod_ql, {
+  dose_check <- sort(as.numeric(names(dr_dat())))[2]
+  pod_check <- quantile(res()$pods$dose, input$pod_ql)
+  if (pod_check < dose_check) {
+    shinyalert(title = "WARNING",
+               text = p(strong("POD Credible Interval violates low-dose asymptote assumption.\n"),
+                        br(),
+                        "POD estimation assumes that the input dose-response data are asymptotic 
+                        at low-doses. The lower limit of the POD Credible Interval is within the 
+                        two smallest doses. Verify that an asymptote has been established at 
+                        lower doses of the input data."),
+               type = "warning",
+               html = TRUE,
+               size = "m")
+  }
+})
+
 # Display result table upon action button click
 pod_res_table <- eventReactive(input$run_analysis, {
-  datatable(res()$pods,
-            colnames = c("Bootstrap Index", "POD (Original Scale)", "POD (Log\u2081\u2080 Scale)", "Menger Curvature"),
+  datatable(res()$pods[,c("bs_index", "dose", "mc")],
+            colnames = c("Bootstrap Index", "POD", "Menger Curvature"),
             rownames = FALSE,
             options = list(dom = "tlp"))
 })
-
-# Display results
-
-med_line <- reactiveVal(TRUE)
-mean_line <- reactiveVal(FALSE)
-observeEvent(input$viewopt_ctr,{
-             if ("Median" %in% input$viewopt_ctr) med_line(T) else med_line(F)
-             if ("Mean" %in% input$viewopt_ctr) mean_line(T) else mean_line(F)})
 
 output$pod_dist <- renderPlot({plot_pod_dist(pod_df = res()$pods, 
                                              in_dat = dr_dat(), 
                                              viewopt = input$viewopt_pod_estimate,
                                              pod_qs = c(input$pod_ql, input$pod_qu),
-                                             median_line = med_line(),
-                                             mean_line = mean_line())})
+                                             median_line = input$med_line,
+                                             mean_line = input$mean_line)})
 
-output$table <- renderDataTable({
-  formatRound(pod_res_table(), columns = c(2,3,4), digits = 2)
+output$pod_table <- output$bs_table <- renderDataTable({
+  formatSignif(pod_res_table(), columns = c(2,3), digits = 4)
 })
 
 # Draw bootstrap summary plot 
-output$bs_summary_plot <- renderPlot({plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), input$viewopt_pod_estimate)})
+output$bs_summary_plot <- renderPlot({plot_mc_summary(spline_df = res()$spline_predictions, 
+                                                      pod_df = res()$pods, 
+                                                      in_dat = dr_dat(), 
+                                                      viewopt = input$viewopt_pod_estimate,
+                                                      pod_qs = c(input$pod_ql, input$pod_qu),
+                                                      median_line = input$med_line,
+                                                      mean_line = input$mean_line)})
 
 
 # Save results 
@@ -76,9 +91,9 @@ output$downloadRes <- downloadHandler(
                          row.names = NULL)
     write.table(params, files[2], row.names = F, sep = "\t", quote = FALSE)
     # Quantile results
-    quants <- sort(unique(c(input$pod_ql, input$pod_qu, 0.05, 0.95, 0.5)))
-    quant_res <- rbind(quantile(res()$pods$dose, quants), quantile(res()$pods$log10_dose, quants))
-    quant_res <- data.frame(" " = c("POD (Original Scale)", "POD (Log Scale)"), quant_res, check.names = F)
+    quants <- sort(unique(c(input$pod_ql, input$pod_qu, 0.025, 0.975, 0.5)))
+    quant_res <- quantile(res()$pods$dose, quants)
+    quant_res <- data.frame(Quantile = names(quant_res), POD = quant_res)
     write.table(quant_res, files[3], row.names = F, sep = "\t", quote = FALSE)
     # pod results
     pod_res <- res()$pods
@@ -96,23 +111,35 @@ output$downloadRes <- downloadHandler(
                   in_dat = dr_dat(), 
                   viewopt = "Original Doses",
                   pod_qs = c(input$pod_ql, input$pod_qu),
-                  median_line = med_line(),
-                  mean_line = mean_line())
+                  median_line = input$med_line,
+                  mean_line = input$mean_line)
     dev.off()
     pdf(files[7], width = 8, height = 4)
     plot_pod_dist(pod_df = res()$pods, 
                   in_dat = dr_dat(), 
                   viewopt = "Log10(Doses)",
                   pod_qs = c(input$pod_ql, input$pod_qu),
-                  median_line = med_line(),
-                  mean_line = mean_line())
+                  median_line = input$med_line,
+                  mean_line = input$mean_line)
     dev.off()
     # bootstrap summary
-    pdf(files[8])
-    plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), "Original Doses")
+    pdf(files[8], width = 8, height = 6)
+    plot_mc_summary(spline_df = res()$spline_predictions, 
+                    pod_df = res()$pods, 
+                    in_dat = dr_dat(), 
+                    viewopt = "Original Doses",
+                    pod_qs = c(input$pod_ql, input$pod_qu),
+                    median_line = input$med_line,
+                    mean_line = input$mean_line)
     dev.off()
-    pdf(files[9])
-    plot_mc_summary(res()$spline_predictions, res()$pods, dr_dat(), "Log10(Doses)")
+    pdf(files[9], width = 8, height = 6)
+    plot_mc_summary(spline_df = res()$spline_predictions, 
+                    pod_df = res()$pods, 
+                    in_dat = dr_dat(), 
+                    viewopt = "Log10(Doses)",
+                    pod_qs = c(input$pod_ql, input$pod_qu),
+                    median_line = input$med_line,
+                    mean_line = input$mean_line)
     dev.off()
     
     zip(file, files)
