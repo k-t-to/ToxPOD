@@ -2,11 +2,16 @@
 op_def <- par()
 op_def <- op_def[!names(op_def) %in% c("cin", "cra", "csi", "cxy", "din", "page")]
 
-# Input Data ----- 
+# Rounding for display -----
+my_round <- function(x) {
+  ifelse(x < 0.01, signif(x, digits = 2), round(x, digits = 2))
+}
 
+# Input Data ----- 
 plot_input_data <- function(in_list, dose_opt){
   df <- do.call("rbind", in_list)
-  x_tick_labs <- signif(unique(df$dose), digits = 2)
+  x_tick_labs <- my_round(unique(df$dose))
+  
   if(dose_opt == "Original Doses"){
     df <- df[,c("dose", "response")]
     x_ax_lab <- "Dose"
@@ -41,7 +46,7 @@ plot_pod_dist <- function(pod_df, in_dat, viewopt, pod_qs = c(0.025, 0.975), op 
   pod_q_u <- quantile(pods_og, pod_qs[2])
   
   # Set x-axis tick labels
-  x_tick_labs <- sapply(in_dat, function(x) signif(x$dose[1], digits = 2))
+  x_tick_labs <- sapply(in_dat, function(x) my_round(x$dose[1]))
   
   if (viewopt == "Original Doses") {
     x_ax_lab <- "POD Estimates (Original Scale)"
@@ -70,7 +75,7 @@ plot_pod_dist <- function(pod_df, in_dat, viewopt, pod_qs = c(0.025, 0.975), op 
   ql_y1 <- d$y[ql_id]
   qu_y1 <- d$y[qu_id]
   dd <- approxfun(d)
-  legend_labs <- paste0(pod_qs * 100, "% = ", c(signif(pod_q_l, 2), signif(pod_q_u, 2)))
+  legend_labs <- paste0(pod_qs * 100, "% = ", my_round(c(pod_q_l, pod_q_u)))
   legend_lines <- c("solid", "solid")
   legend_cols <- c("blue", "blue")
   
@@ -99,7 +104,7 @@ plot_pod_dist <- function(pod_df, in_dat, viewopt, pod_qs = c(0.025, 0.975), op 
     med_plot <- median(pod_df$dose)
     med_y <- dd(med_plot)
     segments(x0 = med_plot, y0 = 0, x1 = med_plot, y1 = med_y, lwd = 3, col = "orange")
-    legend_labs_d <- c(legend_labs_d, paste0("Median = ", signif(med_og, 2)))
+    legend_labs_d <- c(legend_labs_d, paste0("Median = ", my_round(med_og)))
     legend_lines_d <- c(legend_lines_d, "solid")
     legend_cols_d <- c(legend_cols_d, "orange")
   }
@@ -110,7 +115,7 @@ plot_pod_dist <- function(pod_df, in_dat, viewopt, pod_qs = c(0.025, 0.975), op 
     avg_plot <- mean(pod_df$dose)
     avg_y <- dd(avg_plot)
     segments(x0 = avg_plot, y0 = 0, x1 = avg_plot, y1 = avg_y, lwd = 3, col = "orange", lty = "dotted")
-    legend_labs_d <- c(legend_labs_d, paste0("Mean = ", signif(avg_og, 2)))
+    legend_labs_d <- c(legend_labs_d, paste0("Mean = ", my_round(avg_og)))
     legend_lines_d <- c(legend_lines_d, "dotted")
     legend_cols_d <- c(legend_cols_d, "orange")
   }
@@ -131,7 +136,7 @@ plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt, pod_qs = c(0.025
   pod_q_u <- quantile(pods_og, pod_qs[2])
   
   # Set x-axis tick labels
-  x_tick_labs <- sapply(in_dat, function(x) signif(x$dose[1], digits = 2))
+  x_tick_labs <- sapply(in_dat, function(x) my_round(x$dose[1]))
   
   if (viewopt == "Original Doses") {
     x_ax_line_lab <- "Dose"
@@ -175,8 +180,7 @@ plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt, pod_qs = c(0.025
       polygon(x = c(spline_df$dose, rev(spline_df$dose)), y = c(spline_df$q05_resp, rev(spline_df$q95_resp)), col=rgb(1,0.75,0.15,0.5), border = F)
     }
   }
-  
-  legend_labs <- paste0(pod_qs * 100, "% = ", c(signif(pod_q_l, 2), signif(pod_q_u, 2)))
+  legend_labs <- paste0(pod_qs * 100, "% = ", my_round(c(pod_q_l, pod_q_u)))
   legend_lines <- c("solid", "solid")
   legend_cols <- c("blue", "blue")
   
@@ -216,7 +220,7 @@ plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt, pod_qs = c(0.025
     # Median for plot
     med_plot <- median(pod_df$dose)
     abline(v = med_plot, lwd = 2, col = "orange")
-    legend_labs_d <- c(legend_labs_d, paste0("Median = ", signif(med_og, 2)))
+    legend_labs_d <- c(legend_labs_d, paste0("Median = ", my_round(med_og)))
     legend_lines_d <- c(legend_lines_d, "solid")
     legend_cols_d <- c(legend_cols_d, "orange")
   }
@@ -227,7 +231,7 @@ plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt, pod_qs = c(0.025
     # Median for plot
     avg_plot <- mean(pod_df$dose)
     abline(v = avg_plot, lwd = 2, col = "orange", lty = "dotted")
-    legend_labs_d <- c(legend_labs_d, paste0("Mean = ", signif(avg_og, 2)))
+    legend_labs_d <- c(legend_labs_d, paste0("Mean = ", my_round(avg_og)))
     legend_lines_d <- c(legend_lines_d, "dotted")
     legend_cols_d <- c(legend_cols_d, "orange")
   }
@@ -251,7 +255,7 @@ plot_mc_summary <- function(spline_df, pod_df, in_dat, viewopt, pod_qs = c(0.025
 
 # Sample Explorer ----- 
 plot_mc <- function(spline_df, mc_df, pods, bs_ids, in_dat, viewopt, op = op_def) {
-  x_tick_labs <- sapply(in_dat, function(x) signif(x$dose[1], digits = 2))
+  x_tick_labs <- sapply(in_dat, function(x) my_round(x$dose[1]))
   
   if (viewopt == "Original Doses") {
     x_ax_lab <- "Dose"
@@ -359,7 +363,7 @@ plot_bs <- function(bs_df, bs_ids, in_dat, viewopt) {
   n_bs <- length(unique(bs_df$bs_index))
   bs_df <- bs_df[bs_df$bs_index %in% bs_ids,]
   
-  x_tick_labs <- sapply(in_dat, function(x) signif(x$dose[1], digits = 2))
+  x_tick_labs <- sapply(in_dat, function(x) my_round(x$dose[1]))
   
   plot_title <- paste0("Bootstrap Sample Plot (", length(bs_ids), " of ", n_bs, " samples)")
   
@@ -406,7 +410,7 @@ plot_splines <- function(spline_df, bs_ids, in_dat, viewopt) {
   
   plot_title <- paste0("Plot of Interpolated Spline Predictions (", length(bs_ids), " of ", n_bs, " samples)")
   
-  x_tick_labs <- sapply(in_dat, function(x) signif(x$dose[1], digits = 2))
+  x_tick_labs <- sapply(in_dat, function(x) my_round(x$dose[1]))
   
   if (viewopt == "Original Doses") {
     x_ax_lab <- "Dose"

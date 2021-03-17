@@ -27,7 +27,9 @@ observeEvent(input$run_analysis|input$pod_ql, {
 
 # Display result table upon action button click
 pod_res_table <- eventReactive(input$run_analysis, {
-  datatable(res()$pods[,c("bs_index", "dose", "mc")],
+  pod_res_temp <- res()$pods[,c("bs_index", "dose", "mc")]
+  pod_res_temp[,c("dose", "mc")] <- apply(pod_res_temp[,c("dose", "mc")], 2, function(x) ifelse(x < 0.01, signif(x, digits = 2), round(x, digits = 2)))
+  datatable(pod_res_temp,
             colnames = c("Bootstrap Index", "POD", "Menger Curvature"),
             rownames = FALSE,
             options = list(dom = "tlp"))
@@ -41,7 +43,7 @@ output$pod_dist <- renderPlot({plot_pod_dist(pod_df = res()$pods,
                                              mean_line = input$mean_line)})
 
 output$pod_table <- output$bs_table <- renderDataTable({
-  formatSignif(pod_res_table(), columns = c(2,3), digits = 4)
+  pod_res_table()
 })
 
 # Draw bootstrap summary plot 

@@ -36,12 +36,12 @@ output$input_data_plot <- renderPlot({plot_input_data(dr_dat(), input$viewopt_in
 
 # Display input data
 input_data_table <- eventReactive(dr_dat(), {
-  formatSignif(datatable(do.call("rbind", dr_dat()),
+  dr_dat_display <- do.call("rbind", dr_dat())
+  dr_dat_display <- apply(dr_dat_display, 2, function(x){ifelse(abs(x) < 0.01, signif(x, digits = 2), round(x, digits = 2))})
+  datatable(dr_dat_display,
                         colnames = c("Dose", "Log\u2081\u2080(Dose)","Response"),
                         rownames = FALSE,
-                        options = list(dom = "tlp")),
-              columns = c("log10_dose", "response"),
-              digits = 4)
+                        options = list(dom = "tlp"))
 })
 
 observeEvent(input_data_table(),
