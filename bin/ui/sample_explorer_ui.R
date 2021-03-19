@@ -5,48 +5,57 @@
 ### Sidebar ----- 
 # View options
 data_explorer_viewopts_sidebar <- wellPanel(
-  p(strong("View Options"), align = "center", style = "color:#919aa1; text-transform: uppercase; padding:0px; margin:0px"),
-  hr(style = "border-color:#919aa1; padding-top:2px; margin-top:5px; margin-bottom:5px"),
-  radioButtons(inputId = "viewopt_data_explorer",
-               label = "Dose Scale",
-               choices = c("Log\u2081\u2080(Dose)" = "Log10(Doses)",
-                           "Original Dose" = "Original Doses"),
-               selected = "Log10(Doses)"))
+  p(strong("View Options"),
+    align = "center",
+    style = "color:#919aa1;
+             text-transform: uppercase;
+             padding:0px;
+             margin:0px"),
+  hr(style = "border-color:#919aa1;
+              padding-top:2px;
+              margin-top:5px;
+              margin-bottom:5px"),
+  radioButtons(inputId  = "viewopt_data_explorer",
+               label    = "Dose Scale",
+               choices  = c("Log\u2081\u2080(Dose)" = "Log10(Doses)",
+                            "Original Dose"         = "Original Doses"),
+               selected = "Log10(Doses)")
+)
 
-# Summary selections
+# Sample selections
 data_explorer_sample_choice_sidebar <- wellPanel(
   radioButtons(inputId = "data_explorer_sample_choice",
-               label = "Samples to Plot",
-               choices = c("Select Samples",
-                           "Select Random",
-                           "All")),
+               label   = "Sample Selection",
+               choices = c("Select Samples" = "user",
+                           "Select Random"  = "random",
+                           "All"            = "all")),
   conditionalPanel(
-    condition = "input.data_explorer_sample_choice == 'Select Random'",
+    condition = "input.data_explorer_sample_choice == 'random'",
     numericInput(inputId = "random_sample_select",
-                 label = "Number of Samples to Plot",
-                 min = 0,
-                 value = 0)
-  ),
+                 label   = "Number of Samples to Plot",
+                 min     = 0,
+                 value   = 0)),
   conditionalPanel(
-    condition = "input.data_explorer_sample_choice !== 'All'",
-    selectInput(inputId = "bs_id",
-                label = "Samples to Plot",
-                choices = c(),
+    condition = "input.data_explorer_sample_choice === 'user'",
+    selectInput(inputId  = "bs_id",
+                label    = "Samples to Plot",
+                choices  = c(),
                 selected = NULL,
                 multiple = TRUE),
     actionButton(inputId = "reset_bs_samples",
-                 label = "Reset Selected Samples",
-                 class = "btn btn-secondary btn-sm")),
+                 label   = "Reset Selected Samples",
+                 class   = "btn btn-secondary btn-sm")),
   hr(style = "border-color:#919aa1;"),
   conditionalPanel(
-    condition = "input.data_explorer_sample_choice !== 'All'",
+    condition = "input.data_explorer_sample_choice !== 'all'",
     actionButton(inputId = "plot_bs_samples",
-                 label = "Draw Individual Plots",
-                 class = "btn btn-primary")),
+                 label   = "Draw Individual Plots",
+                 class   = "btn btn-primary")),
   div(style="margin-bottom:10px"),
   actionButton(inputId = "plot_bs_summary",
-               label = "Draw Summary Plots",
-               class = "btn btn-primary"))
+               label   = "Draw Summary Plots",
+               class   = "btn btn-primary")
+)
 
 ### Main panel -----
 data_explorer_sample_main <- tabPanel(
@@ -64,10 +73,10 @@ data_explorer_summary_main <- tabPanel(
                   plotOutput("bs_splinefit_plot")))
 )
 
-# Tab Panel ----- 
+### Tab Panel ----- 
 data_explorer_tab <- tabPanel(
   title = "Sample Explorer",
-  icon = icon("table"),
+  icon  = icon("table"),
   conditionalPanel(
     condition = "input.run_analysis",
     fluidRow(
@@ -77,4 +86,6 @@ data_explorer_tab <- tabPanel(
       column(8,
              tabsetPanel(id = "explorer_panel",
                          data_explorer_sample_main,
-                         data_explorer_summary_main)))))
+                         data_explorer_summary_main)))
+  )
+)
