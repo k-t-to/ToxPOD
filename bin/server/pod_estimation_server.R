@@ -6,6 +6,7 @@
 # User clicks Run Analysis
 res <- eventReactive(input$run_analysis, {
   withProgress(calculate_pod_estimates(dr_dat(),
+                                       seed = input$analysis_seed,
                                        resample_size = input$resample_size),
                message = "Calculating...")
 })
@@ -105,6 +106,7 @@ output$downloadRes <- downloadHandler(
                   "Data Source"  = "Example",
                   "Example File" = input$example_choice)
     }
+    params <- c(params, "Seed" = input$analysis_seed)
     params <- c(params, "Number of Bootstrap Samples" = input$resample_size)
     params <- data.frame(Parameter = names(params),
                          Value     = params,

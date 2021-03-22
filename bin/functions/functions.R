@@ -160,6 +160,7 @@ perform_bootstrap <- function(dat_list, interpolated_doses, bs_id) {
 }
 
 calculate_pod_estimates <- function(dat,
+                                    seed,
                                     resample_size = 1000,
                                     interpolation_size = 50) {
   # Get original doses
@@ -171,6 +172,7 @@ calculate_pod_estimates <- function(dat,
 
   # Perform bootstrap POD estimation
   dat <- split(dat, dat[,"dose"])
+  set.seed(seed)
   pods <- lapply(1:resample_size,
                  function(x) perform_bootstrap(dat, interpolated_doses, bs_id = x))
 
