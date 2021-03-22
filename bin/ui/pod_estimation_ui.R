@@ -18,7 +18,7 @@ analysis_opt_sidebar <- wellPanel(
                                 label = "Seed",
                                 min = 1,
                                 max = 1e6,
-                                value = sample.int(1e6,1),
+                                value = 1,
                                 step = 1)),
   actionButton(inputId = "run_analysis",
                label   = "Run Analysis",

@@ -72,3 +72,8 @@ input_data_table <- eventReactive(dr_dat(), {
             options  = list(dom = "tlp"))
 })
 output$input_data_table <- renderDataTable({input_data_table()})
+
+# Create random seed for analysis
+observeEvent(dr_dat(), {
+  updateNumericInput(session, inputId = "analysis_seed", value = sample.int(1e6, 1))
+})

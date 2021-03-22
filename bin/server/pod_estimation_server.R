@@ -92,7 +92,7 @@ output$downloadRes <- downloadHandler(
     write.table(in_dat, files[1], row.names = F, sep = "\t", quote = FALSE)
 
     # Analysis options
-    params <- c()
+    params <- c("Date" = as.character(Sys.time()))
     if (input$data_source == "User Data"){
       if(input$user_input_choice == "Upload"){
         params <- c(params, 
