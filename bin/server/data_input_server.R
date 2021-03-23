@@ -2,17 +2,17 @@
 # Server for Input Data
 ################################
 
-### Input Data -----
-# Load and parse file based on user input
-
+### Prepare Input Data -----
 dat_path <- reactiveVal()
 in_type <- reactiveVal()
 
-observeEvent(input$user_fpath,{
+# File path given
+observeEvent(input$user_fpath, {
   dat_path(input$user_fpath$datapath)
   in_type("file")
-  })
+})
 
+# Example data selected
 observeEvent(input$example_choice, {
   tmp <- switch(
     input$example_choice,
@@ -24,29 +24,17 @@ observeEvent(input$example_choice, {
   in_type("file")
 })
 
+# Data pasted into text box
 observeEvent(input$load_pasted, {
   dat_path(input$user_pasted_data)
   in_type("str")
 })
 
-dr_dat <- eventReactive(req(dat_path()), parse_data(dat_path(), in_type()))
+# Parse input data
+dr_dat <- eventReactive(req(dat_path()),
+                        parse_data(dat_path(), in_type()))
 
-# Plot input data
-output$input_data_plot <- renderPlot({plot_input_data(dr_dat(), input$viewopt_input)})
-
-# Display input data
-input_data_table <- eventReactive(dr_dat(), {
-  dr_dat_display <- do.call("rbind", dr_dat())
-  dr_dat_display <- apply(dr_dat_display, 2, function(x){ifelse(abs(x) < 0.01, signif(x, digits = 2), round(x, digits = 2))})
-  datatable(dr_dat_display,
-                        colnames = c("Dose", "Log\u2081\u2080(Dose)","Response"),
-                        rownames = FALSE,
-                        options = list(dom = "tlp"))
-})
-
-observeEvent(input_data_table(),
-             output$input_data_table <- renderDataTable({input_data_table()}))
-
+# Display input data requirements
 observeEvent(input$data_info, {
   shinyalert(title = "Data Input Requirements",
              text = '
@@ -61,3 +49,26 @@ observeEvent(input$data_info, {
              </div>',
              html = TRUE)
 })
+
+### Display Input Data -----
+# Set plot parameters
+x_ticks <- eventReactive(dr_dat(),
+                         data.frame(dose       = unique(dr_dat()$dose),
+                                    log10_dose = unique(dr_dat()$log10_dose),
+                                    dose_lab   = my_round(unique(dr_dat()$dose))))
+in_plot_opts <- reactive({scale_params(input$viewopt_input)})
+
+# Input data plot
+output$input_data_plot <- renderPlot({
+  plot_input_data(dr_dat(), in_plot_opts(), x_ticks())
+})
+
+# Input data table
+input_data_table <- eventReactive(dr_dat(), {
+  dr_dat_display <- apply(dr_dat(), 2, my_round)
+  datatable(dr_dat_display,
+            colnames = c("Dose", "Log\u2081\u2080(Dose)", "Response"),
+            rownames = FALSE,
+            options  = list(dom = "tlp"))
+})
+output$input_data_table <- renderDataTable({input_data_table()})

@@ -2,16 +2,11 @@
 # Server for displaying bootstrap samples
 ################################
 
-# Sidebar options ----- 
-# Update bootstrap choices from analysis
-observe({
-  choices <- res()$pods$bs_index
-  updateSelectInput(session, "bs_id", choices = choices)
-})
-
-# Update max number of samples to choose
-observe({
+### Sample Selection -----
+# Update sample numbers
+observeEvent(input$run_analysis, {
   n_bs <- input$resample_size
+  updateSelectInput(session, "bs_id", choices = 1:n_bs)
   updateNumericInput(session, inputId = "random_sample_select", max = n_bs)
 })
 
@@ -20,69 +15,62 @@ observeEvent(input$reset_bs_samples, {
   updateSelectInput(session, "bs_id", selected = NA)
 })
 
-# Sample Selection 
+# Update selected samples
 bs_id <- reactiveVal()
-
-# Update bs_id when Select Input is given values
-observeEvent(input$bs_id, {
-  bs_id(input$bs_id)
-})
-
-# When one of the choices is selected
 observe({
-  if (input$data_explorer_sample_choice == "All") {
-    bs_id(res()$pods$bs_index)
+  if (input$data_explorer_sample_choice == "user") bs_id(input$bs_id)
+  if (input$data_explorer_sample_choice == "random") {
+    vals <- sort(sample(input$resample_size, size = input$random_sample_select))
+    bs_id(vals)
+    updateSelectInput(session, "bs_id", selected = vals)
   }
+  if (input$data_explorer_sample_choice == "all") bs_id(1:input$resample_size)
 })
 
-observeEvent(input$random_sample_select, {
-  if (!is.na(input$random_sample_select)){
-    n <- sort(sample(input$resample_size, size = input$random_sample_select))
-    bs_id(n)
-    updateSelectInput(session, "bs_id", selected = n)}
-})
-
-# Individual Plots ----- 
-calc_h <- function(n) {
-  if(n > 2){
-    (ceiling(n/2) * 400) + 30
-  } else {500}
-}
-
-viewopt_de <- reactiveVal("Log10(Doses)")
-
-observeEvent(input$viewopt_data_explorer, {
-  viewopt_de(input$viewopt_data_explorer)
-})
-
+### Plots -----
+# Set plot parameters
+se_plot_opts <- reactive({scale_params(input$viewopt_data_explorer)})
 h <- eventReactive(input$plot_bs_samples, {
-  calc_h(length(bs_id()))
+  n <- length(bs_id())
+  if (n > 2){
+    (ceiling(n/2) * 250) + 30
+  } else {280}
 })
 
-bs_plots <- eventReactive(c(input$plot_bs_samples, viewopt_de()), {
-      plot_mc(res()$spline_predictions, res()$menger_curvature, res()$pods, bs_id = as.numeric(bs_id()), dr_dat(), viewopt_de())
-  }
-)
-
+# Display individual sample plots
+bs_plots <- eventReactive(c(input$plot_bs_samples, se_plot_opts()), {
+  plot_mc(spline_df  = res()$spline_predictions,
+          pod_df     = res()$pods,
+          bs_id      = as.numeric(bs_id()),
+          scale_opts = se_plot_opts(),
+          x_ticks    = x_ticks())
+})
 output$bs_plots <- renderPlot(bs_plots(), height = function(){h()})
+
+# Display summary plots
+bs_resample_plot <- eventReactive(c(input$plot_bs_summary, se_plot_opts()), {
+  plot_bs_summary(df         = res()$bootstrap_values,
+                  bs_ids     = bs_id(),
+                  type       = "bs",
+                  scale_opts = se_plot_opts(),
+                  x_ticks    = x_ticks())
+})
+bs_splinefit_plot <- eventReactive(c(input$plot_bs_summary, se_plot_opts()), {
+  plot_bs_summary(df         = res()$spline_predictions,
+                  bs_ids     = bs_id(),
+                  type       = "spline",
+                  scale_opts = se_plot_opts(),
+                  x_ticks    = x_ticks())
+})
+observeEvent(input$plot_bs_summary, {
+  output$resample_plot <- renderPlot(bs_resample_plot())
+  output$bs_splinefit_plot <- renderPlot(bs_splinefit_plot())
+})
 
 # Switch tabs
 observeEvent(input$plot_bs_samples, {
   updateTabsetPanel(session, "explorer_panel", selected = "bs_sample_tab")
 })
-
-# Summary Plots ----- 
-
-bs_resample_plot <- eventReactive(c(input$plot_bs_summary, input$viewopt_data_explorer),
-                                  plot_bs(res()$bootstrap_values, bs_id(), dr_dat(), input$viewopt_data_explorer))
-bs_splinefit_plot <- eventReactive(c(input$plot_bs_summary, input$viewopt_data_explorer),
-                                   plot_splines(res()$spline_predictions, bs_id(), dr_dat(), input$viewopt_data_explorer))
-
-observeEvent(input$plot_bs_summary, {
-  output$resample_plot <- withProgress(renderPlot(bs_resample_plot()), message = "Drawing Bootstrap Samples...")
-  output$bs_splinefit_plot <- withProgress(renderPlot(bs_splinefit_plot()), message = "Drawing Spline Predictions...")
-})
-
 observeEvent(input$plot_bs_summary, {
   updateTabsetPanel(session, "explorer_panel", selected = "bs_summary_tab")
 })
