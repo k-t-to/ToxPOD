@@ -55,10 +55,20 @@ Click on `Draw Summary Plots` to display two line graphs under the Summary Plots
 
 ### License
 
-This work was created by US government employees working in their government capacity. As a result, this work is in the public domain within the United States. The US Government may exercise copyright in other jurisdictions.
+Copyright 2021 Kim To and Lyle D. Burgoon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+### Issues/Bugs/Feature Requests
+
+If you identify issues/bugs, or have feature requests, please use the [Issues Page](https://github.com/k-t-to/ToxPOD/issues) at the project's GitHub site.
 
 ### Contact
 
-Kim T. To - [kimberly.t.to@erdc.dren.mil](kimberly.t.to@erdc.dren.mil)
+Kim T. To - [kto@ils-inc.com](kto@ils-inc.com)
 
-Lyle Burgoon - [lyle.d.burgoon@erdc.dren.mil](lyle.d.burgoon@erdc.dren.mil)
+Lyle Burgoon - [burgoon.lyle@raptorpharmtox.com](burgoon.lyle@raptorpharmtox.com)
